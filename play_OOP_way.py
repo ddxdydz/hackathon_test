@@ -25,11 +25,6 @@ class Vector:
         x, y, z = map(int, data.split('/'))
         return cls(x, y, z)
 
-    @classmethod
-    def from_list(cls, data):
-        x, y, z = data
-        return cls(x, y, z)
-
     def get_cords(self) -> tuple:
         return self.X, self.Y, self.Z
 
@@ -333,13 +328,13 @@ def make_turn(data: dict) -> BattleOutput:
         cur_friendly_ship.attack_vector = target_enemy.Position  # set default value attack
 
         if dangerous_enemy:
-            cur_friendly_ship.move_vector = battle_state.get_coordinate_line(
-                cur_friendly_ship, dangerous_enemy, 1)[-1]
+            cur_friendly_ship.move_vector = Vector(*battle_state.get_coordinate_line(
+                cur_friendly_ship, dangerous_enemy, 1)[-1])
         else:
             if target_enemy_distance > 5:
                 cur_friendly_ship.move_vector = target_enemy.Position
             elif target_enemy_distance < 4:
-                cur_friendly_ship.move_vector = Vector.from_list(battle_state.get_coordinate_line(
+                cur_friendly_ship.move_vector = Vector(*battle_state.get_coordinate_line(
                     cur_friendly_ship, target_enemy, 1)[-1])
                 battle_output.Message += f'\n {cur_friendly_ship} - {cur_friendly_ship.move_vector}'
             elif 4 <= target_enemy_distance < 5:
@@ -353,7 +348,8 @@ def make_turn(data: dict) -> BattleOutput:
             UserCommand(
                 Command="MOVE",
                 Parameters=MoveCommandParameters(
-                    cur_friendly_ship.Id, cur_friendly_ship.move_vector)
+                    cur_friendly_ship.Id, cur_friendly_ship.move_vector
+                )
             )
         )
         guns = [x for x in cur_friendly_ship.Equipment if isinstance(x, GunBlock)]
