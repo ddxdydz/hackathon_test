@@ -1,0 +1,9 @@
+{
+  "Message": "I have 5 ships and move to center of galaxy and shoot",
+  "UserCommands": [
+    {"Command": "MOVE",
+      "Parameters": {
+        "Id": 1,
+        "Target": [18, 19, 19]
+      }
+    }, {"Command": "ATTACK", "Parameters": {"Id": 1, "Name": "big_blaster", "Target": "18/17/17"}}, {"Command": "MOVE", "Parameters": {"Id": 2, "Target": [18, 19, 19]}}, {"Command": "ATTACK", "Parameters": {"Id": 2, "Name": "big_blaster", "Target": "18/17/17"}}, {"Command": "MOVE", "Parameters": {"Id": 0, "Target": [16, 19, 19]}}, {"Command": "ATTACK", "Parameters": {"Id": 0, "Name": "big_blaster", "Target": "16/17/17"}}, {"Command": "MOVE", "Parameters": {"Id": 3, "Target": [16, 19, 19]}}, {"Command": "ATTACK", "Parameters": {"Id": 3, "Name": "big_blaster", "Target": "18/17/17"}}, {"Command": "MOVE", "Parameters": {"Id": 4, "Target": [16, 19, 19]}}, {"Command": "ATTACK", "Parameters": {"Id": 4, "Name": "big_blaster", "Target": "18/17/17"}}]}
