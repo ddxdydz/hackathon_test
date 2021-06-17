@@ -1,0 +1,13 @@
+{
+    "Ships": [
+        {
+            "Position": "0/0/0",
+            "CompleteShipId": "scout"
+        },
+        {
+            "Position": null,
+            "CompleteShipId": "scout"
+        }
+    ],
+  "Message": "string отладочная информация"
+}

@@ -1,0 +1,27 @@
+{
+    "UserCommands": [
+        {
+            "Command": "MOVE",
+            "Parameters": {
+                "Id": 0,
+                "Target": "21/22/18"
+            }
+        },
+        {
+            "Command": "ACCELERATE",
+            "Parameters": {
+                "Id": 0,
+                "Vector": "21/22/18"
+            }
+        },
+        {
+            "Command": "ATTACK",
+            "Parameters": {
+                "Id": 1,
+                "Name": "big_blaster",
+                "Target": "0/2/27"
+            }
+        }
+    ],
+    "Message": "my_message"
+}
