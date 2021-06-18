@@ -405,7 +405,7 @@ def make_turn(data: dict) -> BattleOutput:
             check_reverse = True
         # Move detection
         for num_ship, ship in enumerate(cur_friendly_ship_list):
-            ship.move_vector = Vector(*start_position_ship[num_ship])
+            ship.add_correct_move(Vector(*start_position_ship[num_ship]))
         # Checking occupied positions
         if all(map(lambda n_ship:
                    cur_friendly_ship_list[n_ship].Position.get_cords() == start_position_ship[n_ship],
@@ -443,7 +443,7 @@ def make_turn(data: dict) -> BattleOutput:
         # Check the allies distance to prevent a collision
         cur_friendly_ship_cords = \
             battle_state.get_all_blocks_pos(cur_friendly_ship.Move_vector.get_cords())
-        add_message(f'PPP {cur_friendly_ship.Id}: {cur_friendly_ship_cords} s({cur_friendly_ship.Position.get_cords()}) e({cur_friendly_ship.Move_vector.get_cords()})')
+        add_message(f'PPP {cur_friendly_ship.Id}: {cur_friendly_ship_cords} s{cur_friendly_ship.Position.get_cords()} e{cur_friendly_ship.Move_vector.get_cords()}')
         for friendly_ship in battle_state.My:
             if friendly_ship.Id != cur_friendly_ship.Id:
                 add_message(f'GGG {friendly_ship.Id}: {battle_state.Allies_position_dict[friendly_ship.Id]} s{friendly_ship.Position.get_cords()} e{friendly_ship.Move_vector.get_cords()}')
