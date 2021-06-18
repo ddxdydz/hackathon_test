@@ -1,369 +1,100 @@
 import json
-from dataclasses import dataclass
-from enum import Enum
-from typing import List, Optional
+
+ALLIES_DISTANCE = 0
+BORDERLINE_SUICIDE_ATTACK = 30
 
 
-class JSONCapability:
-    def to_json(self):
-        return {
-            k: v if not isinstance(v, Vector) else str(v)
-            for k, v in self.__dict__.items()
-            if v is not None
-        }
+def get_cords(some_ship: dict) -> tuple:
+    cords = tuple(map(int, some_ship["Position"].split('/')))
+    return cords
 
 
-# region primitives
-@dataclass
-class Vector:
-    X: int
-    Y: int
-    Z: int
-
-    @classmethod
-    def from_json(cls, data):
-        x, y, z = map(int, data.split('/'))
-        return cls(x, y, z)
-
-    def get_cords(self) -> tuple:
-        return self.X, self.Y, self.Z
-
-    def __str__(self):
-        return f"{self.X}/{self.Y}/{self.Z}"
+def get_distance(ship_1, ship_2):
+    cords_1 = get_cords(ship_1)
+    cords_2 = get_cords(ship_2)
+    return ((cords_1[0] - cords_2[0]) ** 2 +
+            (cords_1[1] - cords_2[1]) ** 2 +
+            (cords_1[2] - cords_2[2]) ** 2) ** 0.5
 
 
-def get_br_cords(x0: int, y0: int, x1: int, y1: int, x_inc: int = 0) -> list:
-    x_inc += 1  # increment so that the last coordinate is in the list
-    res_cords, reverse = [], False
-    delta_x, delta_y = abs(x1 - x0), abs(y1 - y0)
-    if delta_y > delta_x:
-        delta_x, delta_y = delta_y, delta_x
-        x0, y0 = y0, x0
-        x1, y1 = y1, x1
-        reverse = True
-    error, delta_err, y = 0, (delta_y + 1), y0
-    dir_y = 1 if y1 - y0 > 0 else -1
-    step = 1 if x1 - x0 > 0 else -1
-    for x in range(x0, x1 + step * x_inc, step):
-        res_cords.append((y, x) if reverse else (x, y))
-        error = error + delta_err
-        if error >= (delta_x + 1):
-            y = y + dir_y
-            error = error - (delta_x + 1)
+def get_depart_cords(ship_1, ship_2):
+    cords_1 = get_cords(ship_1)
+    cords_2 = get_cords(ship_2)
+    values_list = [
+        cords_2[cords_num] - cords_1[cords_num]
+        for cords_num in range(0, 3)
+    ]
+    max_elem = max(values_list) if max(values_list) else 1
+    move_target = presented_cords(tuple(
+        round(cords_1[cords_num] - values_list[cords_num] / max_elem)
+        for cords_num in range(0, 3)
+    ))
+    return move_target
+
+
+def check_borders(cords: tuple) -> tuple:
+    res_cords = tuple(map(
+        lambda cord: 28 if cord > 28 else 1 if cord < 1 else cord,
+        cords)
+    )
     return res_cords
 
 
-def get_br_cords_3d(x0, y0, z0, x1, y1, z1, x_inc: int = 0) -> dict:
-    res_cords = []
-    cords_2d_y = get_br_cords(x0, y0, x1, y1, x_inc)
-    cords_2d_z = get_br_cords(x0, z0, x1, z1, x_inc)
-    for p_y in reversed(cords_2d_y):
-        for n_z in range(len(cords_2d_z) - 1, -1, -1):
-            if cords_2d_z[n_z][0] == p_y[0]:
-                res_cords.append((p_y[0], p_y[1], cords_2d_z.pop(n_z)[1]))
-            else:
-                break
-    res_cords.reverse()
-    res_dict = {'res': res_cords, 'message': ''}
-    if (x0, y0, z0) == res_cords[0] and (x1, y1, z1) == res_cords[:(-1 - x_inc)]:
-        res_dict
-    return
-
-
-# endregion
-
-# region battle commands
-
-@dataclass
-class CommandParameters(JSONCapability):
-    pass
-
-
-@dataclass
-class AttackCommandParameters(CommandParameters):
-    Id: int
-    Name: str
-    Target: Vector
-
-
-@dataclass
-class MoveCommandParameters(CommandParameters):
-    Id: int
-    Target: Vector
-
-
-@dataclass
-class AccelerateCommandParameters(CommandParameters):
-    Id: int
-    Vector: Vector
-
-
-@dataclass
-class UserCommand(JSONCapability):
-    Command: str
-    Parameters: CommandParameters
-
-
-@dataclass
-class BattleOutput(JSONCapability):
-    Message: str = None
-    UserCommands: List[UserCommand] = None
-
-
-# endregion
-
-# region draft commands
-@dataclass
-class DraftChoice(JSONCapability):
-    # TODO Make draft choice
-    pass
-
-
-@dataclass
-class DraftOptions:
-    # TODO: Parse draft options
-    pass
-
-
-# endregion
-
-# region equipment
-
-class EquipmentType(Enum):
-    Energy = 0
-    Gun = 1
-    Engine = 2
-    Health = 3
-
-
-class EffectType(Enum):
-    Blaster = 0
-
-
-@dataclass
-class EquipmentBlock(JSONCapability):
-    Name: str
-    Type: EquipmentType
-
-    @classmethod
-    def from_json(cls, data):
-        if EquipmentType(data['Type']) == EquipmentType.Energy:
-            return EnergyBlock(**data)
-        elif EquipmentType(data['Type']) == EquipmentType.Gun:
-            return GunBlock(**data)
-        elif EquipmentType(data['Type']) == EquipmentType.Engine:
-            return EngineBlock(**data)
-        elif EquipmentType(data['Type']) == EquipmentType.Health:
-            return HealthBlock(**data)
-
-
-@dataclass
-class EnergyBlock(EquipmentBlock):
-    IncrementPerTurn: int
-    MaxEnergy: int
-    StartEnergy: int
-    Type = EquipmentType.Energy
-
-
-@dataclass
-class EngineBlock(EquipmentBlock):
-    MaxAccelerate: int
-    Type = EquipmentType.Engine
-
-
-@dataclass
-class GunBlock(EquipmentBlock):
-    Damage: int
-    EffectType: EffectType
-    EnergyPrice: int
-    Radius: int
-    Type = EquipmentType.Gun
-
-
-@dataclass
-class HealthBlock(EquipmentBlock):
-    MaxHealth: int
-    StartHealth: int
-
-
-@dataclass
-class EffectType(EquipmentBlock):
-    MaxHealth: int
-    StartHealth: int
-    Type = EquipmentType.Health
-
-
-# endregion
-
-# region battle state
-
-@dataclass
-class Ship(JSONCapability):
-    Id: int
-    Position: Vector
-    Velocity: Vector
-    Energy: Optional[int] = None
-    Health: Optional[int] = None
-    Equipment: List[EquipmentBlock] = None
-
-    @classmethod
-    def from_json(cls, data):
-        if data.get('Equipment'):
-            data['Equipment'] = list(map(EquipmentBlock.from_json, data.get('Equipment', [])))
-        data['Position'] = Vector.from_json(data['Position'])
-        data['Velocity'] = Vector.from_json(data['Velocity'])
-        return cls(**data)
-
-    def get_center_absolute_cords(self) -> tuple:
-        x, y, z = self.Position.get_cords()
-        return x + 1, y + 1, z + 1
-
-    @staticmethod
-    def get_dangerous_enemy(sorted_enemies_dist):
-        if len(sorted_enemies_dist['enemies']) > 2:
-            dangerous_enemy_tup = sorted_enemies_dist['enemies'][1]
-            if dangerous_enemy_tup[1] < 6:
-                return dangerous_enemy_tup[0]
-        return False
-
-
-@dataclass
-class FireInfo(JSONCapability):
-    EffectType: EffectType
-    Source: Vector
-    Target: Vector
-
-    @classmethod
-    def from_json(cls, data):
-        data['Source'] = Vector.from_json(data['Source'])
-        data['Target'] = Vector.from_json(data['Target'])
-        return cls(**data)
-
-
-@dataclass
-class BattleState(JSONCapability):
-    FireInfos: List[FireInfo]
-    My: List[Ship]
-    Opponent: List[Ship]
-
-    @classmethod
-    def from_json(cls, data):
-        my = list(map(Ship.from_json, data['My']))
-        opponent = list(map(Ship.from_json, data['Opponent']))
-        fire_infos = list(map(FireInfo.from_json, data['FireInfos']))
-        return cls(fire_infos, my, opponent)
-
-    @staticmethod
-    def get_distance_ships(ship_1: Ship, ship_2: Ship) -> int:
-        cords = get_br_cords_3d(
-            *ship_1.get_center_absolute_cords(),
-            *ship_2.get_center_absolute_cords()
-        )
-        return len(cords) - 2
-
-    @staticmethod
-    def get_coordinate_line(ship_1: Ship, ship_2: Ship, x_inc: int = 0) -> list:
-        cords_list = get_br_cords_3d(
-            *ship_1.get_center_absolute_cords(),
-            *ship_2.get_center_absolute_cords(),
-            x_inc)
-        return cords_list
-
-    def get_sorted_my_ships(self) -> list:
-        '''sort the ships according to the number of enemies around'''
-        return sorted(
-            self.My,
-            key=lambda my_ship: len(
-                [1 for enemy_ship in self.Opponent
-                 if self.get_distance_ships(my_ship, enemy_ship) < 6]
-            ),
-            reverse=True
-        )
-
-    def get_sorted_enemies_dist_by_ship(self, my_ship: Ship) -> dict:
-        enemy_distance_by_ship = {
-            'ship': my_ship,
-            'enemies': [],
-            'message': ''
-        }
-
-        sorted_enemy_list = []
-        for enemy_ship in self.Opponent:
-            sorted_enemy_list.append(
-                (enemy_ship, self.get_distance_ships(enemy_ship, my_ship))
-            )
-        sorted_enemy_list.sort(key=lambda elem: elem[1])
-        enemy_distance_by_ship['enemies'] = sorted_enemy_list
-        enemy_distance_by_ship['message'] = \
-            f'FUNC get_sorted_enemies_dist_by_ship: \n' + \
-            f'Ship: {my_ship}, \n' + \
-            f'enemies: {enemy_distance_by_ship["enemies"]}\n'
-
-        return enemy_distance_by_ship
-
-
-# endregion
-
-
-def make_draft(data: dict) -> DraftChoice:
-    # TODO: parse input data
-    # TODO: Make draft
-    return DraftChoice()
-
-
-def make_turn(data: dict) -> BattleOutput:
-    global start_position_ship, check_reverse, is_on_start_position
-    battle_state = BattleState.from_json(data)
-
-    battle_output = BattleOutput()
-    battle_output.UserCommands = []
-    battle_output.Message = \
-        f"I have {len(battle_state.My)} ships and move to center of galaxy and shoot"
-
-    enemy_targets_dict = {enemy.Id: [] for enemy in battle_state.Opponent}
-    cur_friendly_ship_list = sorted(battle_state.My, key=lambda ship: ship.Id)
-
-    if not is_on_start_position:
-        if not check_reverse:
-            if cur_friendly_ship_list[0].Position.get_cords()[0] > 15:
-                start_position_ship = \
-                    {key: tuple(30 - value[n] - 2 for n in range(len(value)))
-                     for key, value in start_position_ship.items()}
-            check_reverse = True
-        for num_ship, ship in enumerate(cur_friendly_ship_list):
-            ship.move_vector = Vector(*start_position_ship[num_ship])
-        if all(map(lambda n_ship:
-                   cur_friendly_ship_list[n_ship].Position.get_cords() == start_position_ship[n_ship],
-                   range(len(cur_friendly_ship_list)))):
-            is_on_start_position = True
-    else:
-        cur_friendly_ship_list = battle_state.get_sorted_my_ships()
-
-    for cur_friendly_ship in cur_friendly_ship_list:
-        sorted_enemies_dist = battle_state.get_sorted_enemies_dist_by_ship(cur_friendly_ship)
-        target_enemy, target_enemy_distance = sorted_enemies_dist['enemies'][0]
-        enemy_targets_dict[target_enemy.Id].append(cur_friendly_ship)
-        dangerous_enemy = cur_friendly_ship.get_dangerous_enemy(sorted_enemies_dist)
-
-
-        battle_output.UserCommands.append(
-            UserCommand(
-                Command="MOVE",
-                Parameters=MoveCommandParameters(
-                    cur_friendly_ship.Id, cur_friendly_ship.move_vector
-                )
+def presented_cords(cords: tuple) -> str:
+    new_cords = check_borders(cords)
+    return f"{new_cords[0]}/{new_cords[1]}/{new_cords[2]}"
+
+
+def make_draft(data: dict) -> dict:
+    draft = {}
+    # TODO: Make draft here
+    return draft
+
+
+def make_turn(data: dict) -> dict:
+    battle_output = {
+        'Message': f"I have {len(data['My'])} ships and move to center of galaxy and shoot",
+        'UserCommands': []
+    }
+
+    my_sorted_ships = sorted(data["My"], key=lambda s: s['Id'])
+    cur_chip_id = my_sorted_ships[-1]['Id']
+
+    for friendly_ship in my_sorted_ships:
+        do_attack = False
+        do_move = False if cur_chip_id != friendly_ship['Id'] else True
+
+        target_enemy = min(
+            data["Opponent"],
+            key=lambda enemy_ship: get_distance(
+                friendly_ship,
+                enemy_ship
             )
         )
-        guns = [x for x in cur_friendly_ship.Equipment if isinstance(x, GunBlock)]
-        if guns:
-            battle_output.UserCommands.append(
-                UserCommand(
-                    Command="ATTACK",
-                    Parameters=AttackCommandParameters(
-                        cur_friendly_ship.Id, guns[0].Name, cur_friendly_ship.attack_vector
-                    )
-                )
-            )
+
+        move_target = target_enemy["Position"]
+        gun_target = '15/15/15'
+
+        if do_move:
+            battle_output['UserCommands'].append({
+                "Command": "MOVE",
+                "Parameters": {
+                    'Id': friendly_ship['Id'],
+                    'Target': move_target
+                }
+            })
+        if do_attack:
+            guns = [x for x in friendly_ship['Equipment'] if x['Type'] == 1]
+            if guns:
+                gun = guns[0]
+                battle_output['UserCommands'].append({
+                    "Command": "ATTACK",
+                    "Parameters": {
+                        'Id': friendly_ship['Id'],
+                        'Name': gun['Name'],
+                        'Target': gun_target
+                    }
+                })
 
     return battle_output
 
@@ -373,9 +104,9 @@ def play_game():
         raw_line = input()
         line = json.loads(raw_line)
         if 'PlayerId' in line:
-            print(json.dumps(make_draft(line), default=lambda x: x.to_json(), ensure_ascii=False))
+            print(json.dumps(make_draft(line), ensure_ascii=False))
         elif 'My' in line:
-            print(json.dumps(make_turn(line), default=lambda x: x.to_json(), ensure_ascii=False))
+            print(json.dumps(make_turn(line), ensure_ascii=False))
 
 
 if __name__ == '__main__':

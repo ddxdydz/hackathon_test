@@ -1,11 +1,7 @@
-# Python3 code for generating points on a 3-D line 
-# using Bresenham's Algorithm
-
-
-def bresenham_3d(x1, y1, z1, x2, y2, z2, inc_dr_axis: int = 0) -> list:
+def bresenham_3d(x1, y1, z1, x2, y2, z2, inc_dr_axis: int = 0, max_iter: int = 32) -> list:
     # Python3 code for generating points on a 3-D line
     # using Bresenham's Algorithm
-    res_points_list = [(x1, y1, z1)]
+    res_points_list, cur_iter = [(x1, y1, z1)], 1
     dx, dy, dz = abs(x2 - x1), abs(y2 - y1), abs(z2 - z1)
     xs = 1 if x2 > x1 else -1
     ys = 1 if y2 > y1 else -1
@@ -16,7 +12,7 @@ def bresenham_3d(x1, y1, z1, x2, y2, z2, inc_dr_axis: int = 0) -> list:
         inc_dr_axis *= xs
         p1 = 2 * dy - dx
         p2 = 2 * dz - dx
-        while x1 != (x2 + inc_dr_axis):
+        while x1 != (x2 + inc_dr_axis) and cur_iter < max_iter:
             x1 += xs
             if p1 >= 0:
                 y1 += ys
@@ -27,13 +23,14 @@ def bresenham_3d(x1, y1, z1, x2, y2, z2, inc_dr_axis: int = 0) -> list:
             p1 += 2 * dy
             p2 += 2 * dz
             res_points_list.append((x1, y1, z1))
+            cur_iter += 1
 
     # Driving axis is Y-axis"
     elif dy >= dx and dy >= dz:
         inc_dr_axis *= ys
         p1 = 2 * dx - dy
         p2 = 2 * dz - dy
-        while y1 != (y2 + inc_dr_axis):
+        while y1 != (y2 + inc_dr_axis) and cur_iter < max_iter:
             y1 += ys
             if p1 >= 0:
                 x1 += xs
@@ -44,13 +41,14 @@ def bresenham_3d(x1, y1, z1, x2, y2, z2, inc_dr_axis: int = 0) -> list:
             p1 += 2 * dx
             p2 += 2 * dz
             res_points_list.append((x1, y1, z1))
+            cur_iter += 1
 
     # Driving axis is Z-axis"
     else:
         inc_dr_axis *= zs
         p1 = 2 * dy - dz
         p2 = 2 * dx - dz
-        while z1 != (z2 + inc_dr_axis):
+        while z1 != (z2 + inc_dr_axis) and cur_iter < max_iter:
             z1 += zs
             if p1 >= 0:
                 y1 += ys
@@ -60,8 +58,9 @@ def bresenham_3d(x1, y1, z1, x2, y2, z2, inc_dr_axis: int = 0) -> list:
                 p2 -= 2 * dz
             p1 += 2 * dy
             p2 += 2 * dx
-
             res_points_list.append((x1, y1, z1))
+            cur_iter += 1
+
     return res_points_list
 
 
@@ -69,8 +68,9 @@ if __name__ == '__main__':
     in_x1, in_y1, in_z1 = 1, 12, 6
     in_x2, in_y2, in_z2 = 10, 19, 16
     res_point_list = bresenham_3d(
-        in_x1, in_y1, in_z1, in_x2, in_y2, in_z2, inc_dr_axis=3)
-    print(res_point_list)
+        in_x1, in_y1, in_z1, in_x2, in_y2, in_z2, inc_dr_axis=0, max_iter=3)
+    print(len(res_point_list))
+
 
 
 '''

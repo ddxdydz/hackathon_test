@@ -15,13 +15,13 @@ def get_br_cords_3d(x0, y0, z0, x1, y1, z1, x_step: int = 0) -> list:
     return res_cords
 
 
-field_size = 30
+field_size = 40
 # 21, 27, 27
 # 1, 3, 3
 
-in_x0, in_y0, in_z0 = 1, 12, 6
-in_x1, in_y1, in_z1 = 10, 19, 16
-x_inc = 3
+in_x0, in_y0, in_z0 = 0, 0, 0
+in_x1, in_y1, in_z1 = 30, 30, 30
+x_inc = 0
 
 field = [['0(00)'] * field_size for _ in range(field_size)]
 
@@ -34,7 +34,7 @@ res = get_br_cords_3d(
 )
 s_true, e_true = False, False
 print((in_x0, in_y0, in_z0), (in_x1, in_y1, in_z1), x_inc)
-print(res)
+print(len(res))
 for point_x, point_y, point_z in res:
     field[point_y][point_x] = f"1({str(point_z).rjust(2, '0')})"
     if (point_x, point_y, point_z) == (in_x0, in_y0, in_z0):
