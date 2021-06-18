@@ -333,8 +333,7 @@ class BattleState(JSONCapability):
             *ship_2.get_center_absolute_cords()
         )
         res_distance = len(cords) - 2
-        # TODO
-        # add_message(f'F(dist_s) - {ship_1.Id}&{ship_2.Id}={res_distance}')
+        add_message(f'F(dist_s) - {ship_1.Id}&{ship_2.Id}={res_distance}')
         return res_distance
 
     @staticmethod
@@ -343,10 +342,9 @@ class BattleState(JSONCapability):
             *ship_1.get_center_absolute_cords(),
             *ship_2.get_center_absolute_cords(),
             x_inc)
-        # TODO
-        # add_message(
-        #     f'F(cord_line)-{ship_1.Id},{ship_2.Id},{x_inc}={cords_list[-x_inc - 2:]}'
-        # )
+        add_message(
+            f'F(cord_line)-{ship_1.Id},{ship_2.Id},{x_inc}={cords_list[-x_inc - 2:]}'
+        )
         return cords_list
 
     def get_sorted_my_ships(self) -> list:
@@ -443,10 +441,8 @@ def make_turn(data: dict) -> BattleOutput:
         # Check the allies distance to prevent a collision
         cur_friendly_ship_cords = \
             battle_state.get_all_blocks_pos(cur_friendly_ship.Move_vector.get_cords())
-        add_message(f'PPP {cur_friendly_ship.Id}: {cur_friendly_ship_cords} s{cur_friendly_ship.Position.get_cords()} e{cur_friendly_ship.Move_vector.get_cords()}')
         for friendly_ship in battle_state.My:
             if friendly_ship.Id != cur_friendly_ship.Id:
-                add_message(f'GGG {friendly_ship.Id}: {battle_state.Allies_position_dict[friendly_ship.Id]} s{friendly_ship.Position.get_cords()} e{friendly_ship.Move_vector.get_cords()}')
                 sum_a_cords = battle_state.Allies_position_dict[friendly_ship.Id] + cur_friendly_ship_cords
                 if len(set(sum_a_cords)) != len(sum_a_cords):
                     do_move = False
