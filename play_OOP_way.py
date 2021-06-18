@@ -43,47 +43,67 @@ class Vector:
         return f"{self.X}/{self.Y}/{self.Z}"
 
 
-def get_br_cords(x0: int, y0: int, x1: int, y1: int, x_inc: int = 0) -> list:
-    x_inc += 1  # increment so that the last coordinate is in the list
-    res_cords, reverse = [], False
-    delta_x, delta_y = abs(x1 - x0), abs(y1 - y0)
-    if delta_y > delta_x:
-        delta_x, delta_y = delta_y, delta_x
-        x0, y0 = y0, x0
-        x1, y1 = y1, x1
-        reverse = True
-    error, delta_err, y = 0, (delta_y + 1), y0
-    dir_y = 1 if y1 - y0 > 0 else -1
-    step = 1 if x1 - x0 > 0 else -1
-    for x in range(x0, x1 + step * x_inc, step):
-        res_cords.append((y, x) if reverse else (x, y))
-        error = error + delta_err
-        if error >= (delta_x + 1):
-            y = y + dir_y
-            error = error - (delta_x + 1)
-    return res_cords
+def bresenham_3d(x1, y1, z1, x2, y2, z2, inc_dr_axis: int = 0) -> list:
+    # Python3 code for generating points on a 3-D line
+    # using Bresenham's Algorithm
+    res_points_list = [(x1, y1, z1)]
+    dx, dy, dz = abs(x2 - x1), abs(y2 - y1), abs(z2 - z1)
+    xs = 1 if x2 > x1 else -1
+    ys = 1 if y2 > y1 else -1
+    zs = 1 if z2 > z1 else -1
 
+    # Driving axis is X-axis"
+    if dx >= dy and dx >= dz:
+        inc_dr_axis *= xs
+        p1 = 2 * dy - dx
+        p2 = 2 * dz - dx
+        while x1 != (x2 + inc_dr_axis):
+            x1 += xs
+            if p1 >= 0:
+                y1 += ys
+                p1 -= 2 * dx
+            if p2 >= 0:
+                z1 += zs
+                p2 -= 2 * dx
+            p1 += 2 * dy
+            p2 += 2 * dz
+            res_points_list.append((x1, y1, z1))
 
-def get_br_cords_3d(x0, y0, z0, x1, y1, z1, x_inc: int = 0) -> list:
-    global messages
-    res_cords = []
-    cords_2d_y = get_br_cords(x0, y0, x1, y1, x_inc)
-    cords_2d_z = get_br_cords(x0, z0, x1, z1, x_inc)
-    for p_y in reversed(cords_2d_y):
-        for n_z in range(len(cords_2d_z) - 1, -1, -1):
-            if cords_2d_z[n_z][0] == p_y[0]:
-                res_cords.append((p_y[0], p_y[1], cords_2d_z.pop(n_z)[1]))
-            else:
-                break
-    res_cords.reverse()
+    # Driving axis is Y-axis"
+    elif dy >= dx and dy >= dz:
+        inc_dr_axis *= ys
+        p1 = 2 * dx - dy
+        p2 = 2 * dz - dy
+        while y1 != (y2 + inc_dr_axis):
+            y1 += ys
+            if p1 >= 0:
+                x1 += xs
+                p1 -= 2 * dy
+            if p2 >= 0:
+                z1 += zs
+                p2 -= 2 * dy
+            p1 += 2 * dx
+            p2 += 2 * dz
+            res_points_list.append((x1, y1, z1))
 
-    if (x0, y0, z0) == res_cords[0] and (x1, y1, z1) == res_cords[-1 - x_inc]:
-        add_message('FUNC(get_br_cords_3d) - OK!')
+    # Driving axis is Z-axis"
     else:
-        add_message(f'FUNC(get_br_cords_3d) - Error: start_cords({x0, y0, z0}), ' +
-                    f'end_cords({x1, y1, z1}), return_line({res_cords})')
+        inc_dr_axis *= zs
+        p1 = 2 * dy - dz
+        p2 = 2 * dx - dz
+        while z1 != (z2 + inc_dr_axis):
+            z1 += zs
+            if p1 >= 0:
+                y1 += ys
+                p1 -= 2 * dz
+            if p2 >= 0:
+                x1 += xs
+                p2 -= 2 * dz
+            p1 += 2 * dy
+            p2 += 2 * dx
+            res_points_list.append((x1, y1, z1))
 
-    return res_cords
+    return res_points_list
 
 
 def add_message(message: str):
@@ -281,7 +301,7 @@ class BattleState(JSONCapability):
             *ship_2.get_center_absolute_cords()
         )
         res_distance = len(cords) - 2
-        add_message(f'FUNC(get_distance_ships) - {ship_1.Id}&{ship_2.Id}={res_distance}')
+        add_message(f'F(dist_s) - {ship_1.Id}&{ship_2.Id}={res_distance}')
         return res_distance
 
     @staticmethod
@@ -291,7 +311,7 @@ class BattleState(JSONCapability):
             *ship_2.get_center_absolute_cords(),
             x_inc)
         add_message(
-            f'FUNC(get_coordinate_line) - {ship_1.Id},{ship_2.Id},{x_inc}={cords_list}'
+            f'F(cord_line)-{ship_1.Id},{ship_2.Id},{x_inc}={cords_list[-x_inc - 2:]}'
         )
         return cords_list
 
@@ -319,9 +339,6 @@ class BattleState(JSONCapability):
             )
         sorted_enemy_list.sort(key=lambda elem: elem[1])
         enemy_distance_by_ship['enemies'] = sorted_enemy_list
-        add_message(f'FUNC get_sorted_enemies_dist_by_ship: \n' +
-                    f'Ship: {my_ship}, \n' +
-                    f'enemies: {enemy_distance_by_ship["enemies"]}\n')
         return enemy_distance_by_ship
 
 
@@ -340,9 +357,10 @@ def make_turn(data: dict) -> BattleOutput:
 
     battle_output = BattleOutput()
     battle_output.UserCommands = []
+    battle_output.Message = ''
 
     enemy_targets_dict = {enemy.Id: [] for enemy in battle_state.Opponent}
-    cur_friendly_ship_list = sorted(battle_state.My, key=lambda ship: ship.Id)
+    cur_friendly_ship_list = sorted(battle_state.My, key=lambda s: s.Id)
 
     if not is_on_start_position:
         if not check_reverse:
@@ -380,7 +398,6 @@ def make_turn(data: dict) -> BattleOutput:
                 elif target_enemy_distance < 4:
                     cur_friendly_ship.move_vector = Vector(*battle_state.get_coordinate_line(
                         cur_friendly_ship, target_enemy, 1)[-1])
-                    battle_output.Message += f'\n {cur_friendly_ship} - {cur_friendly_ship.move_vector}'
                 elif 4 <= target_enemy_distance < 5:
                     if len(enemy_targets_dict[target_enemy.Id]) >= 2 and \
                             min(enemy_targets_dict[target_enemy.Id][:-1],

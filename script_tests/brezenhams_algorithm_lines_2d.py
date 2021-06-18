@@ -23,23 +23,24 @@ def get_br_cords(x0: int, y0: int, x1: int, y1: int, x_step: int = 0) -> list:
     return res_cords
 
 
-field_size = 10
+if __name__ == '__main__':
+    field_size = 10
 
-in_x0, in_y0 = 7, 1
-in_x1, in_y1 = 5, 8
+    in_x0, in_y0 = 5, 1
+    in_x1, in_y1 = 5, 4
+    inc_x = 4
 
-field = [[0] * field_size for _ in range(field_size)]
-field[in_y0][in_x0] = -2
-field[in_y1][in_x1] = -3
-res = get_br_cords(in_x0, in_y0, in_x1, in_y1, 1)
-for point_x, point_y in res:
-    field[point_y][point_x] = 1
-    if (point_x, point_y) == (in_x0, in_y0):
-        field[point_y][point_x] = 2
-    if (point_x, point_y) == (in_x1, in_y1):
-        field[point_y][point_x] = 3
-field[in_y0][in_x0] = 2
-field[in_y1][in_x1] = 3
-print(*field, sep='\n')
-print('\n')
+    field = [[0] * field_size for _ in range(field_size)]
+
+    res = get_br_cords(in_x0, in_y0, in_x1, in_y1, inc_x)
+    for point_x, point_y in res:
+        field[point_y][point_x] = 1
+        if (point_x, point_y) == (in_x0, in_y0):
+            field[point_y][point_x] = 2
+        if (point_x, point_y) == (in_x1, in_y1):
+            field[point_y][point_x] = 3
+    field[in_y0][in_x0] = 2
+    field[in_y1][in_x1] = 3
+    print(*field, sep='\n')
+    print('\n')
 
