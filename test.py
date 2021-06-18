@@ -1,3 +1,10 @@
-data = [0, 1, 2, 3]
+data = [1, 3, 5]
 
-print(data[:-1])
+
+def f():
+    data.clear()
+
+
+print(data)
+f()
+print(data)

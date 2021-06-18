@@ -3,17 +3,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
 
-start_position_ship = {
-    0: (0, 10, 10),
-    1: (3, 10, 10),
-    2: (7, 7, 8),
-    3: (16, 10, 0),
-    4: (16, 6, 0)
-}
-is_on_start_position = False
-check_reverse = False
-messages = []
-
 
 class JSONCapability:
     def to_json(self):
@@ -64,8 +53,7 @@ def get_br_cords(x0: int, y0: int, x1: int, y1: int, x_inc: int = 0) -> list:
     return res_cords
 
 
-def get_br_cords_3d(x0, y0, z0, x1, y1, z1, x_inc: int = 0) -> list:
-    global messages
+def get_br_cords_3d(x0, y0, z0, x1, y1, z1, x_inc: int = 0) -> dict:
     res_cords = []
     cords_2d_y = get_br_cords(x0, y0, x1, y1, x_inc)
     cords_2d_z = get_br_cords(x0, z0, x1, z1, x_inc)
@@ -76,19 +64,10 @@ def get_br_cords_3d(x0, y0, z0, x1, y1, z1, x_inc: int = 0) -> list:
             else:
                 break
     res_cords.reverse()
-
-    if (x0, y0, z0) == res_cords[0] and (x1, y1, z1) == res_cords[-1 - x_inc]:
-        add_message('FUNC(get_br_cords_3d) - OK!')
-    else:
-        add_message(f'FUNC(get_br_cords_3d) - Error: start_cords({x0, y0, z0}), ' +
-                    f'end_cords({x1, y1, z1}), return_line({res_cords})')
-
-    return res_cords
-
-
-def add_message(message: str):
-    global messages
-    messages.append(message)
+    res_dict = {'res': res_cords, 'message': ''}
+    if (x0, y0, z0) == res_cords[0] and (x1, y1, z1) == res_cords[:(-1 - x_inc)]:
+        res_dict
+    return
 
 
 # endregion
@@ -280,9 +259,7 @@ class BattleState(JSONCapability):
             *ship_1.get_center_absolute_cords(),
             *ship_2.get_center_absolute_cords()
         )
-        res_distance = len(cords) - 2
-        add_message(f'FUNC(get_distance_ships) - {ship_1.Id}&{ship_2.Id}={res_distance}')
-        return res_distance
+        return len(cords) - 2
 
     @staticmethod
     def get_coordinate_line(ship_1: Ship, ship_2: Ship, x_inc: int = 0) -> list:
@@ -290,9 +267,6 @@ class BattleState(JSONCapability):
             *ship_1.get_center_absolute_cords(),
             *ship_2.get_center_absolute_cords(),
             x_inc)
-        add_message(
-            f'FUNC(get_coordinate_line) - {ship_1.Id},{ship_2.Id},{x_inc}={cords_list}'
-        )
         return cords_list
 
     def get_sorted_my_ships(self) -> list:
@@ -309,7 +283,8 @@ class BattleState(JSONCapability):
     def get_sorted_enemies_dist_by_ship(self, my_ship: Ship) -> dict:
         enemy_distance_by_ship = {
             'ship': my_ship,
-            'enemies': []
+            'enemies': [],
+            'message': ''
         }
 
         sorted_enemy_list = []
@@ -319,9 +294,11 @@ class BattleState(JSONCapability):
             )
         sorted_enemy_list.sort(key=lambda elem: elem[1])
         enemy_distance_by_ship['enemies'] = sorted_enemy_list
-        add_message(f'FUNC get_sorted_enemies_dist_by_ship: \n' +
-                    f'Ship: {my_ship}, \n' +
-                    f'enemies: {enemy_distance_by_ship["enemies"]}\n')
+        enemy_distance_by_ship['message'] = \
+            f'FUNC get_sorted_enemies_dist_by_ship: \n' + \
+            f'Ship: {my_ship}, \n' + \
+            f'enemies: {enemy_distance_by_ship["enemies"]}\n'
+
         return enemy_distance_by_ship
 
 
@@ -340,6 +317,8 @@ def make_turn(data: dict) -> BattleOutput:
 
     battle_output = BattleOutput()
     battle_output.UserCommands = []
+    battle_output.Message = \
+        f"I have {len(battle_state.My)} ships and move to center of galaxy and shoot"
 
     enemy_targets_dict = {enemy.Id: [] for enemy in battle_state.Opponent}
     cur_friendly_ship_list = sorted(battle_state.My, key=lambda ship: ship.Id)
@@ -366,27 +345,6 @@ def make_turn(data: dict) -> BattleOutput:
         enemy_targets_dict[target_enemy.Id].append(cur_friendly_ship)
         dangerous_enemy = cur_friendly_ship.get_dangerous_enemy(sorted_enemies_dist)
 
-        if is_on_start_position:
-            cur_friendly_ship.move_vector = cur_friendly_ship.Position  # set default value move
-        cur_friendly_ship.attack_vector = target_enemy.Position  # set default value attack
-
-        if is_on_start_position:
-            if isinstance(dangerous_enemy, Ship):
-                cur_friendly_ship.move_vector = Vector(*battle_state.get_coordinate_line(
-                    cur_friendly_ship, dangerous_enemy, 1)[-1])
-            else:
-                if target_enemy_distance > 5:
-                    cur_friendly_ship.move_vector = target_enemy.Position
-                elif target_enemy_distance < 4:
-                    cur_friendly_ship.move_vector = Vector(*battle_state.get_coordinate_line(
-                        cur_friendly_ship, target_enemy, 1)[-1])
-                    battle_output.Message += f'\n {cur_friendly_ship} - {cur_friendly_ship.move_vector}'
-                elif 4 <= target_enemy_distance < 5:
-                    if len(enemy_targets_dict[target_enemy.Id]) >= 2 and \
-                            min(enemy_targets_dict[target_enemy.Id][:-1],
-                                key=lambda my_ship: my_ship.Health).Health < \
-                            cur_friendly_ship.Health * 0.5:
-                        cur_friendly_ship.move_vector = target_enemy.Position
 
         battle_output.UserCommands.append(
             UserCommand(
@@ -406,8 +364,7 @@ def make_turn(data: dict) -> BattleOutput:
                     )
                 )
             )
-    battle_output.Message = '\n'.join(messages)
-    messages.clear()
+
     return battle_output
 
 
