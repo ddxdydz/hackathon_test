@@ -296,7 +296,7 @@ class BattleState(JSONCapability):
 
     @staticmethod
     def get_distance_ships(ship_1: Ship, ship_2: Ship) -> int:
-        cords = get_br_cords_3d(
+        cords = bresenham_3d(
             *ship_1.get_center_absolute_cords(),
             *ship_2.get_center_absolute_cords()
         )
@@ -306,7 +306,7 @@ class BattleState(JSONCapability):
 
     @staticmethod
     def get_coordinate_line(ship_1: Ship, ship_2: Ship, x_inc: int = 0) -> list:
-        cords_list = get_br_cords_3d(
+        cords_list = bresenham_3d(
             *ship_1.get_center_absolute_cords(),
             *ship_2.get_center_absolute_cords(),
             x_inc)
