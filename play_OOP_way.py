@@ -44,9 +44,12 @@ class Vector:
         return f"{self.X}/{self.Y}/{self.Z}"
 
 
-def bresenham_3d(x1, y1, z1, x2, y2, z2, inc_dr_axis: int = 0, max_iter: int = 32) -> list:
+# for building rays
+def bresenham_3d(point_1: tuple, point_2: tuple, inc_dr_axis: int = 0, max_iter: int = 32) -> list:
     # Python3 code for generating points on a 3-D line
     # using Bresenham's Algorithm
+    x1, y1, z1, x2, y2, z2 = point_1 + point_2
+
     res_points_list, cur_iter = [(x1, y1, z1)], 1
     dx, dy, dz = abs(x2 - x1), abs(y2 - y1), abs(z2 - z1)
     xs = 1 if x2 > x1 else -1
@@ -108,6 +111,18 @@ def bresenham_3d(x1, y1, z1, x2, y2, z2, inc_dr_axis: int = 0, max_iter: int = 3
             cur_iter += 1
 
     return res_points_list
+
+
+# to determine the distance of the attack blaster
+def manhattan_distance(point_1: tuple, point_2: tuple) -> int:
+    x1, y1, z1, x2, y2, z2 = point_1 + point_2
+    return abs(x1 - x2) + abs(y1 - y2) + abs(z1 - z2)
+
+
+# to determine the distance of the ships
+def chebyshev_distance(point_1: tuple, point_2: tuple) -> int:
+    x1, y1, z1, x2, y2, z2 = point_1 + point_2
+    return max(abs(x1 - x2), abs(y1 - y2), abs(z1 - z2))
 
 
 def add_message(message: str):
@@ -275,8 +290,7 @@ class Ship(JSONCapability):
 
     def add_correct_move(self, target: Vector):
         self.Move_vector = Vector(*bresenham_3d(
-            *(self.Position.get_cords() + target.get_cords()),
-            max_iter=2)[-1])
+            self.Position.get_cords(), target.get_cords(), max_iter=2)[-1])
 
 
 @dataclass
@@ -329,8 +343,8 @@ class BattleState(JSONCapability):
     @staticmethod
     def get_distance_ships(ship_1: Ship, ship_2: Ship) -> int:
         cords = bresenham_3d(
-            *ship_1.get_center_absolute_cords(),
-            *ship_2.get_center_absolute_cords()
+            ship_1.get_center_absolute_cords(),
+            ship_2.get_center_absolute_cords()
         )
         res_distance = len(cords) - 2
         add_message(f'F(dist_s) - {ship_1.Id}&{ship_2.Id}={res_distance}')
@@ -339,8 +353,8 @@ class BattleState(JSONCapability):
     @staticmethod
     def get_coordinate_line(ship_1: Ship, ship_2: Ship, x_inc: int = 0) -> list:
         cords_list = bresenham_3d(
-            *ship_1.get_center_absolute_cords(),
-            *ship_2.get_center_absolute_cords(),
+            ship_1.get_center_absolute_cords(),
+            ship_2.get_center_absolute_cords(),
             x_inc)
         add_message(
             f'F(cord_line)-{ship_1.Id},{ship_2.Id},{x_inc}={cords_list[-x_inc - 2:]}'
