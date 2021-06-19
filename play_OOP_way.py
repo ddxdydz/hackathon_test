@@ -265,10 +265,10 @@ class Ship(JSONCapability):
     Move_vector: Vector
     Attack_vector: Vector
     Next_iteration_ship_points: dict[tuple: int]
+    Default_dangerous_ships: list = None
     Energy: Optional[int] = None
     Health: Optional[int] = None
     Equipment: dict[EquipmentType: EquipmentBlock] = None
-    Dangerous_ships: list = None
 
     @classmethod
     def from_json(cls, data):
@@ -290,18 +290,13 @@ class Ship(JSONCapability):
         cube = tuple((p[0], p[1], p[2] + n) for n in range(3) for p in stack_1)
         data['Next_iteration_ship_points'] = {
             data['Next_iteration_ship_points'][p]: 0 for p in cube}
+        data['Next_iteration_ship_points'][data['Position'].get_cords()] -= 1
 
         return cls(**data)
 
-    def add_dangerous_ships(self, enemies_list: list):
-        enemy_distances = \
-            [(e_ship, BattleState.get_distance_ships(
-                self.Position.get_cords(), e_ship.Position.get_cords()))
-             for e_ship in enemies_list]
-        dangerous_ships = sorted(filter(
-            lambda ship: ship[1] < 5, enemy_distances),
-            key=lambda ship: ship[1])
-        self.Dangerous_ships = dangerous_ships
+    def add_default_dangerous_ships(self, enemy_list: list):
+        self.Default_dangerous_ships = BattleState.get_dangerous_ships(
+            self.Position.get_cords(), enemy_list, trigger_dist=5)
 
     def add_correct_move(self, target: Vector):
         self.Move_vector = Vector(*bresenham_3d(
@@ -339,11 +334,11 @@ class BattleState(JSONCapability):
         opponent = list(map(Ship.from_json, data['Opponent']))
         fire_infos = list(map(FireInfo.from_json, data['FireInfos']))
 
-        # Adding possible threats ships
-        for m_ship in my:
-            m_ship.add_dangerous_ships(opponent)
+        # Fill default_dangerous_ships values
+        for f_ship in my:
+            f_ship.add_default_dangerous_ships(opponent)
         for e_ship in opponent:
-            e_ship.add_dangerous_ships(my)
+            e_ship.add_default_dangerous_ships(my)
 
         ships_collision_pos = {
             ship.Id: cls.get_all_blocks_pos(ship.Position.get_cords())
@@ -390,7 +385,7 @@ class BattleState(JSONCapability):
              for point in ship_1_collision_pos], key=lambda p: p[1])[0]
         res_chebyshev_distance = min(
             [chebyshev_distance(point, closest_ship_1_point)
-             for point in ship_2_collision_pos])
+             for point in ship_2_collision_pos]) - 2
 
         add_message(f'D {ship_1_cords}&{ship_2_cords}={res_chebyshev_distance}')
 
@@ -406,9 +401,10 @@ class BattleState(JSONCapability):
              for point in ship_1_collision_pos], key=lambda p: p[1])[0]
         res_chebyshev_distance = min(
             [manhattan_distance(point, closest_ship_1_point)
-             for point in ship_2_collision_pos])
+             for point in ship_2_collision_pos]) - 1
 
-        add_message(f'C {ship_attack_cords} from {closest_ship_1_point} to {ship_target_cords}')
+        add_message(f'C {ship_attack_cords} from {closest_ship_1_point} to ' +
+                    f'{ship_target_cords} d {res_chebyshev_distance}')
 
         return res_chebyshev_distance
 
@@ -430,6 +426,30 @@ class BattleState(JSONCapability):
         add_message(f'F(cord_line)-{ship_1_cords},{ship_2_cords},{inc_dr_axis}={cords_list[-inc_dr_axis - 2:]}')
 
         return cords_list
+
+    @staticmethod
+    # TODO TESTING FUNC
+    def get_interacting_blocks(ship_1_cords, ship_2_cords) -> tuple:
+        ship_1_collision_pos = BattleState.get_all_blocks_pos(ship_1_cords)
+        ship_2_collision_pos = BattleState.get_all_blocks_pos(ship_2_cords)
+        closest_ship_1_point = min(
+            [(point, chebyshev_distance(point, ship_2_cords))
+             for point in ship_1_collision_pos], key=lambda p: p[1])[0]
+        closest_ship_2_point = min(
+            [(point, chebyshev_distance(point, closest_ship_1_point))
+             for point in ship_2_collision_pos], key=lambda p: p[1])[0]
+        return closest_ship_1_point, closest_ship_2_point
+
+    @staticmethod
+    def get_dangerous_ships(ship_cords: tuple, enemies_list: list, trigger_dist=5):
+        enemy_distances = \
+            [(e_ship, BattleState.get_distance_ships(
+                ship_cords, e_ship.Position.get_cords()))
+             for e_ship in enemies_list]
+        dangerous_ships = sorted(filter(
+            lambda ship: ship[1] < trigger_dist, enemy_distances),
+            key=lambda ship: ship[1])
+        return dangerous_ships
 
     def get_sorted_my_ships(self) -> list:
         # Sort the ships according to the number of enemies around func
@@ -500,29 +520,120 @@ def make_turn(data: dict) -> BattleOutput:
             messages.clear()
             return battle_output
 
-    # Main move commands cycle:
+    # Forming move commands cycle:
     for cur_my_ship in battle_state.My:  # we could sort it
-        pass
-
-        # Check the allies distance to prevent a collision
-        cur_my_ship_cords = \
-            battle_state.get_all_blocks_pos(cur_my_ship.Move_vector.get_cords())
-        for friendly_ship in battle_state.My:
-            if friendly_ship.Id != cur_my_ship.Id:
-                sum_a_cords = battle_state.Ships_collision_pos[friendly_ship.Id] + cur_my_ship_cords
-                if len(set(sum_a_cords)) != len(sum_a_cords):
+        for possible_pos in cur_my_ship.Next_iteration_ship_points.keys():
+            # Check background
+            if not all(map(lambda n: 0 <= possible_pos[n] <= 28, range(3))):
+                cur_my_ship.Next_iteration_ship_points[possible_pos] += -1000
+            # Add weights: enemy concentration count
+            dangerous_ships = battle_state.get_dangerous_ships(
+                possible_pos, battle_state.Opponent, trigger_dist=6)
+            cur_my_ship.Next_iteration_ship_points[possible_pos] += \
+                -(len(dangerous_ships) - 1)
+            # Add weights: allies focused target count
+            focused_weight = 0
+            for e_ship, _ in battle_state.get_dangerous_ships(
+                    possible_pos, battle_state.Opponent, trigger_dist=5):
+                enemy_dangerous_ships = e_ship.Default_dangerous_ships
+                if enemy_dangerous_ships:
+                    enemy_dangerous_ships_ids = \
+                        tuple(map(lambda f_ship: f_ship[0].Id, enemy_dangerous_ships))
+                    if cur_my_ship.Id in enemy_dangerous_ships_ids:
+                        my_ship_index = enemy_dangerous_ships_ids.index(cur_my_ship.Id)
+                        del enemy_dangerous_ships[my_ship_index]
+                else:
                     break
+                if len(enemy_dangerous_ships) > focused_weight:
+                    focused_weight = len(enemy_dangerous_ships)
+            cur_my_ship.Next_iteration_ship_points[possible_pos] += \
+                focused_weight
+            # Add weights: enemy distance
+            enemy_distance_weight = -2
+            if dangerous_ships:
+                _, closest_enemy_distance = dangerous_ships[0]
+                if closest_enemy_distance <= 3:
+                    enemy_distance_weight = -1
+                elif closest_enemy_distance == 4:
+                    enemy_distance_weight = 2
+                elif closest_enemy_distance == 5:
+                    enemy_distance_weight = 1
+            cur_my_ship.Next_iteration_ship_points[possible_pos] += \
+                enemy_distance_weight
+            # Add weights: allies distance
+            allies_distance_weight = 0
+            _, closest_allies_distance = battle_state.get_dangerous_ships(
+                possible_pos, battle_state.My, trigger_dist=3)[0]
+            if closest_allies_distance >= 1:
+                allies_distance_weight = 1
+            cur_my_ship.Next_iteration_ship_points[possible_pos] += \
+                allies_distance_weight
 
-        # Updating the battle_state.Ships_collision_pos
-        battle_state.Ships_collision_pos[cur_my_ship.Id] = \
-            battle_state.get_all_blocks_pos(
-                cur_my_ship.Move_vector.get_cords())
+    # Final forming move commands:
+    were_changes = True
+    ship_pos_dict = {cur_my_ship.Id: max(
+        cur_my_ship.Next_iteration_ship_points.items(),
+        key=lambda p: p[1])[0] for cur_my_ship in battle_state.My}
+    while were_changes:
+        for cur_my_ship in battle_state.My:
+            # Check the allies distance to prevent a collision
+            cur_my_ship_cords = battle_state.get_all_blocks_pos(
+                ship_pos_dict[cur_my_ship.Id])
+            for friendly_ship in battle_state.My:
+                if friendly_ship.Id != cur_my_ship.Id:
+                    sum_a_cords = battle_state.get_all_blocks_pos(
+                        ship_pos_dict[friendly_ship.Id]) + cur_my_ship_cords
+                    if len(set(sum_a_cords)) != len(sum_a_cords):
+                        cur_my_ship.Next_iteration_ship_points[
+                            ship_pos_dict[cur_my_ship.Id]] += -4
+                        ship_pos_dict[cur_my_ship.Id], _ = max(
+                            cur_my_ship.Next_iteration_ship_points.items(),
+                            key=lambda p: p[1])
+                        break
+            were_changes = False
 
-    # Final formation move commands:
-    # for cur_my_ship in battle_state.My:
-
-    # Main command attack cycle:
-    # for cur_my_ship in battle_state.My:
+    # Forming command attack:
+    my_ship_collision = {
+        f_ship.Id: battle_state.get_all_blocks_pos(ship_pos_dict[f_ship.Id])
+        for f_ship in battle_state.My
+    }
+    op_ships_focused = {e_ship.Id: set() for e_ship in battle_state.Opponent}
+    my_ships_targets = {f_ship.Id: set() for f_ship in battle_state.My}
+    for cur_my_ship in battle_state.My:
+        for e_ship, _ in battle_state.get_dangerous_ships(
+                cur_my_ship.Position.get_cords(), battle_state.Opponent,
+                trigger_dist=4):
+            blaster_ray_cords = battle_state.get_coordinate_line(
+                *battle_state.get_interacting_blocks(
+                    ship_pos_dict[cur_my_ship.Id], e_ship.Position.get_cords()))[1:]
+            my_ship_ids = set(my_ship_collision.keys())
+            my_ship_ids.remove(cur_my_ship.Id)
+            allies_collisions = sum(
+                my_ship_collision[f_ship_id] for f_ship_id in my_ship_ids)
+            # Check friendly fire
+            if len(set(blaster_ray_cords + allies_collisions)) == \
+                    len(blaster_ray_cords + allies_collisions):
+                op_ships_focused[e_ship.Id].add(cur_my_ship.Id)
+                my_ships_targets[cur_my_ship.Id].add(e_ship.Id)
+    enemies_hp_dict = {e_ship.Id: e_ship.Health for e_ship in battle_state.Opponent}
+    for e_ship_id in op_ships_focused.keys():  # Check count focused ships
+        count_focused_ships = enemies_hp_dict[e_ship_id] // 4 + 1 \
+                if enemies_hp_dict[e_ship_id] / 4 != float(enemies_hp_dict[e_ship_id] // 4) else \
+                enemies_hp_dict[e_ship_id] // 4
+        focused_ships = sorted(
+            op_ships_focused[e_ship_id], key=lambda f_ship: len(
+                my_ships_targets[f_ship.Id]))[:count_focused_ships]
+        op_ships_focused[e_ship_id] = focused_ships
+    while list(op_ships_focused.values()):
+        for e_ship, f_ships in sorted(op_ships_focused.items(), key=lambda elem: len(elem[1]), reverse=True):
+            for f_ship in f_ships:
+                f_ship.Attack_vector = e_ship.Position
+            if f_ships:
+                for f_ship in f_ships:
+                    for ef_ship in op_ships_focused.keys():
+                        op_ships_focused[ef_ship] = \
+                            set(op_ships_focused[ef_ship]) - set(f_ship)
+                break
 
     # Final formation main part output:
     for cur_my_ship in battle_state.My:

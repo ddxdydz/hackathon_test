@@ -56,3 +56,6 @@ cube = tuple((p[0], p[1], p[2] + n) for n in range(3) for p in stack_1)
 for p in cube[18:28]:
     field[p[1] + 1][p[0] + 1] = 1
 print(*field, sep='\n')'''
+
+d = {1: 'd', 2: 'g', 3: 'a'}
+print(tuple(d.items()))
