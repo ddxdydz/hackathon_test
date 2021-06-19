@@ -263,6 +263,8 @@ class Ship(JSONCapability):
     Position: Vector
     Velocity: Vector
     Move_vector: Vector
+    Attack_vector: Vector
+    Next_iteration_ship_points: dict[tuple: int]
     Energy: Optional[int] = None
     Health: Optional[int] = None
     Equipment: dict[EquipmentType: EquipmentBlock] = None
@@ -278,6 +280,17 @@ class Ship(JSONCapability):
         data['Position'] = Vector.from_json(data['Position'])
         data['Velocity'] = Vector.from_json(data['Velocity'])
         data['Move_vector'] = data['Position']
+        data['Attack_vector'] = data['Position']
+
+        # Fill next_iteration_ship_points:
+        cords = data['Position'].get_cords()
+        st_p = cords[0] - 1, cords[1] - 1, cords[2] - 1
+        row_1 = tuple((st_p[0] + n, st_p[1], st_p[2]) for n in range(3))
+        stack_1 = tuple((p[0], p[1] + n, p[2]) for n in range(3) for p in row_1)
+        cube = tuple((p[0], p[1], p[2] + n) for n in range(3) for p in stack_1)
+        data['Next_iteration_ship_points'] = {
+            data['Next_iteration_ship_points'][p]: 0 for p in cube}
+
         return cls(**data)
 
     def add_dangerous_ships(self, enemies_list: list):
@@ -460,97 +473,67 @@ def make_draft(data: dict) -> DraftChoice:
 def make_turn(data: dict) -> BattleOutput:
     global start_position_ship, check_reverse, is_on_start_position
     battle_state = BattleState.from_json(data)
-
     battle_output = BattleOutput()
     battle_output.UserCommands = []
-    battle_output.Message = ''
 
-    enemy_targets_dict = {enemy.Id: [] for enemy in battle_state.Opponent}
-    cur_friendly_ship_list = sorted(battle_state.My, key=lambda s: s.Id)
-
+    # Realization of movement to a given starting position:
     if not is_on_start_position:
-        # Check Reverse
-        if not check_reverse:
-            if cur_friendly_ship_list[0].Position.get_cords()[0] > 15:
-                start_position_ship = \
-                    {key: tuple(30 - value[n] - 2 for n in range(len(value)))
-                     for key, value in start_position_ship.items()}
-            check_reverse = True
-        # Move detection
-        for num_ship, ship in enumerate(cur_friendly_ship_list):
-            ship.add_correct_move(Vector(*start_position_ship[num_ship]))
         # Checking occupied positions
         if all(map(lambda n_ship:
-                   cur_friendly_ship_list[n_ship].Position.get_cords() == start_position_ship[n_ship],
-                   range(len(cur_friendly_ship_list)))):
+                   battle_state.My[n_ship].Position.get_cords() == start_position_ship[n_ship],
+                   range(len(battle_state.My)))):
             is_on_start_position = True
-    else:
-        cur_friendly_ship_list = battle_state.get_sorted_my_ships()
+        else:
+            # Check Reverse
+            if not check_reverse:
+                if battle_state.My[0].Position.get_cords()[0] > 15:
+                    start_position_ship = \
+                        {key: tuple(30 - value[n] - 2 for n in range(len(value)))
+                         for key, value in start_position_ship.items()}
+                check_reverse = True
+            # Move detection
+            for num_ship, ship in enumerate(battle_state.My):
+                battle_output.UserCommands.append(
+                    UserCommand(Command="MOVE", Parameters=MoveCommandParameters(
+                        ship.Id, Vector(*start_position_ship[num_ship]))))
+            battle_output.Message = ''
+            messages.clear()
+            return battle_output
 
-    for cur_friendly_ship in cur_friendly_ship_list:
-        do_move = do_attack = True
-        sorted_enemies_dist = battle_state.get_sorted_enemies_dist_by_ship(cur_friendly_ship)
-        target_enemy, target_enemy_distance = sorted_enemies_dist['enemies'][0]
-        enemy_targets_dict[target_enemy.Id].append(cur_friendly_ship)
-        dangerous_enemy = cur_friendly_ship.Dangerous_ships[0][1]
-        cur_friendly_ship.attack_vector = target_enemy.Position  # set default value attack
-
-        if is_on_start_position:
-            if isinstance(dangerous_enemy, Ship):
-                cur_friendly_ship.add_correct_move(Vector(*battle_state.get_coordinate_line(
-                    cur_friendly_ship.Position.get_cords(),
-                    dangerous_enemy.Position.get_cords(), 1)[-1]))
-            else:
-                if target_enemy_distance > 5:
-                    cur_friendly_ship.add_correct_move(target_enemy.Position)
-                elif target_enemy_distance < 4:
-                    cur_friendly_ship.add_correct_move(Vector(
-                        *battle_state.get_coordinate_line(
-                            cur_friendly_ship.Position.get_cords(),
-                            target_enemy.Position.get_cords(), 1)[-1]))
-                elif 4 <= target_enemy_distance < 5:
-                    if len(enemy_targets_dict[target_enemy.Id]) >= 2 and \
-                            min(enemy_targets_dict[target_enemy.Id][:-1],
-                                key=lambda my_ship: my_ship.Health).Health < \
-                            cur_friendly_ship.Health * 0.5:
-                        cur_friendly_ship.add_correct_move(target_enemy.Position)
+    # Main move commands cycle:
+    for cur_my_ship in battle_state.My:  # we could sort it
+        pass
 
         # Check the allies distance to prevent a collision
-        cur_friendly_ship_cords = \
-            battle_state.get_all_blocks_pos(cur_friendly_ship.Move_vector.get_cords())
+        cur_my_ship_cords = \
+            battle_state.get_all_blocks_pos(cur_my_ship.Move_vector.get_cords())
         for friendly_ship in battle_state.My:
-            if friendly_ship.Id != cur_friendly_ship.Id:
-                sum_a_cords = battle_state.Ships_collision_pos[friendly_ship.Id] + cur_friendly_ship_cords
+            if friendly_ship.Id != cur_my_ship.Id:
+                sum_a_cords = battle_state.Ships_collision_pos[friendly_ship.Id] + cur_my_ship_cords
                 if len(set(sum_a_cords)) != len(sum_a_cords):
-                    do_move = False
                     break
 
-        if do_move:
-            # Updating the battle_state.Ships_collision_pos
-            battle_state.Ships_collision_pos[cur_friendly_ship.Id] = \
-                battle_state.get_all_blocks_pos(
-                    cur_friendly_ship.Move_vector.get_cords())
+        # Updating the battle_state.Ships_collision_pos
+        battle_state.Ships_collision_pos[cur_my_ship.Id] = \
+            battle_state.get_all_blocks_pos(
+                cur_my_ship.Move_vector.get_cords())
 
+    # Final formation move commands:
+    # for cur_my_ship in battle_state.My:
+
+    # Main command attack cycle:
+    # for cur_my_ship in battle_state.My:
+
+    # Final formation main part output:
+    for cur_my_ship in battle_state.My:
+        battle_output.UserCommands.append(
+            UserCommand(Command="MOVE", Parameters=MoveCommandParameters(
+                cur_my_ship.Id, cur_my_ship.Move_vector)))
+        guns = [x for x in cur_my_ship.Equipment if isinstance(x, GunBlock)]
+        if guns:
             battle_output.UserCommands.append(
-                UserCommand(
-                    Command="MOVE",
-                    Parameters=MoveCommandParameters(
-                        cur_friendly_ship.Id, cur_friendly_ship.Move_vector
-                    )
-                )
-            )
-
-        if do_attack:
-            guns = [x for x in cur_friendly_ship.Equipment if isinstance(x, GunBlock)]
-            if guns:
-                battle_output.UserCommands.append(
-                    UserCommand(
-                        Command="ATTACK",
-                        Parameters=AttackCommandParameters(
-                            cur_friendly_ship.Id, guns[0].Name, cur_friendly_ship.attack_vector
-                        )
-                    )
-                )
+                UserCommand(Command="ATTACK", Parameters=AttackCommandParameters(
+                    cur_my_ship.Id, guns[0].Name, cur_my_ship.Attack_vector)))
 
     # Add debugging message in output
     battle_output.Message = ''

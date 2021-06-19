@@ -46,4 +46,13 @@ def chebyshev_distance(point_1: tuple, point_2: tuple) -> int:
 # print(manhattan_distance((1, 2, 3), (4, 5, 6)))
 # print(chebyshev_distance((1, 2, 3), (4, 5, 6)))
 
-x = sor
+'''field = [[0] * 5 for _ in range(5)]
+cords = (1, 1, 1)
+st_p = cords[0] - 1, cords[1] - 1, cords[2] - 1
+row_1 = tuple((st_p[0] + n, st_p[1], st_p[2]) for n in range(3))
+stack_1 = tuple((p[0], p[1] + n, p[2]) for n in range(3) for p in row_1)
+cube = tuple((p[0], p[1], p[2] + n) for n in range(3) for p in stack_1)
+
+for p in cube[18:28]:
+    field[p[1] + 1][p[0] + 1] = 1
+print(*field, sep='\n')'''
