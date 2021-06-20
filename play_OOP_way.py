@@ -3,19 +3,12 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
 
-# start_position_ship = {
-#     0: (0, 8, 4),
-#     1: (0, 4, 8),
-#     2: (4, 4, 4),
-#     3: (4, 8, 0),
-#     4: (8, 4, 0)
-# }
 start_position_ship = {
-    0: (0, 0, 0),
-    1: (2, 0, 0),
-    2: (4, 0, 0),
-    3: (6, 0, 0),
-    4: (8, 0, 0)
+    0: (0, 2, 2),
+    1: (0, 0, 4),
+    2: (2, 0, 2),
+    3: (2, 2, 0),
+    4: (4, 0, 0)
 }
 is_on_start_position = False
 check_reverse = False
@@ -512,7 +505,6 @@ def make_turn(data: dict) -> BattleOutput:
     battle_output.UserCommands = []
 
     # Realization of movement to a given starting position:
-    is_on_start_position = True
     if not is_on_start_position:
         # Check Reverse
         if not check_reverse:
@@ -560,6 +552,15 @@ def make_turn(data: dict) -> BattleOutput:
             # Check background
             if not all(map(lambda n: 0 <= possible_pos[n] <= 28, range(3))):
                 cur_my_ship.Next_iteration_ship_points[possible_pos] += -1000
+            else:
+                check_background_weight, n_min, n_max = -12, 0, 28
+                while check_background_weight:
+                    n_min, n_max = n_min + 1, n_max - 1
+                    check_background_weight += 1
+                    if not all(map(lambda n: n_min <= possible_pos[n] <= n_max, range(3))):
+                        cur_my_ship.Next_iteration_ship_points[possible_pos] += \
+                            check_background_weight
+                        break
             # Add weights: enemy concentration count
             dangerous_ships = battle_state.get_dangerous_ships(
                 possible_pos, battle_state.Opponent, trigger_dist=6)
@@ -586,18 +587,22 @@ def make_turn(data: dict) -> BattleOutput:
             enemy_distance_weight = -2
             if dangerous_ships:
                 _, closest_enemy_distance = dangerous_ships[0]
-                if closest_enemy_distance <= 3:
+                if closest_enemy_distance <= 2:
                     enemy_distance_weight = -1
-                elif closest_enemy_distance == 4:
-                    enemy_distance_weight = 2
-                elif closest_enemy_distance == 5:
+                elif 3 <= closest_enemy_distance <= 4:
                     enemy_distance_weight = 1
+                elif closest_enemy_distance == 5:
+                    enemy_distance_weight = 0
             else:
                 nearest_enemy, nearest_enemy_dist = battle_state.get_nearest_enemy(
                     possible_pos, battle_state.Opponent)
-                if battle_state.get_distance_ships(
-                        cur_my_ship.Position.get_cords(), nearest_enemy.Position.get_cords()) < \
-                        nearest_enemy_dist:
+                x1 = (len(battle_state.get_coordinate_line(
+                    possible_pos, nearest_enemy.Position.get_cords())))
+                x2 = (len(battle_state.get_coordinate_line(
+                    cur_my_ship.Position.get_cords(), nearest_enemy.Position.get_cords())))
+                # if battle_state.get_distance_ships(possible_pos, nearest_enemy.Position.get_cords()) < \
+                #         nearest_enemy_dist:
+                if x1 < x2:
                     enemy_distance_weight = 2
             cur_my_ship.Next_iteration_ship_points[possible_pos] += \
                 enemy_distance_weight
@@ -636,6 +641,12 @@ def make_turn(data: dict) -> BattleOutput:
     for ship in battle_state.My:
         ship.Move_vector = Vector(*ship_pos_dict[ship.Id])
 
+    # for ship in battle_state.My:
+    #     print(ship.Id, ship.Position.get_cords())
+    #     pos_l = list(ship.Next_iteration_ship_points.items())
+    #     pprint_pos_list = [pos_l[n: n + 3] for n in range(0, len(pos_l), 3)]
+    #     print(*pprint_pos_list, sep='\n')
+
     # Forming command attack:
     my_ship_collision = {
         f_ship.Id: battle_state.get_all_blocks_pos(ship_pos_dict[f_ship.Id])
@@ -662,9 +673,7 @@ def make_turn(data: dict) -> BattleOutput:
                 my_ships_targets[cur_my_ship.Id].add(e_ship.Id)
     enemies_hp_dict = {e_ship.Id: e_ship.Health for e_ship in battle_state.Opponent}
     for e_ship_id in op_ships_focused.keys():  # Check count focused ships
-        count_focused_ships = enemies_hp_dict[e_ship_id] // 5 + 1 \
-                if enemies_hp_dict[e_ship_id] / 5 != float(enemies_hp_dict[e_ship_id] // 5) else \
-                enemies_hp_dict[e_ship_id] // 5
+        count_focused_ships = enemies_hp_dict[e_ship_id] // 5 + 1
         focused_ships = sorted(
             op_ships_focused[e_ship_id], key=lambda ship_id: len(
                 my_ships_targets[ship_id]))[:count_focused_ships]
@@ -740,4 +749,4 @@ def play_game():
 
 
 if __name__ == '__main__':
-    local_test_play_game()
+    play_game()
