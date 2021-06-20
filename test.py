@@ -11,6 +11,11 @@ print(f"ID: {cur_my_ship.Id} V: {cur_my_ship.Velocity} P: {cur_my_ship.Position}
 for ship in battle_state.My:
     print(f"ID: {ship.Id} P: {ship.Position} T: {ship.Attack_vector} D: {battle_state.get_distance_ships(ship.Position.get_cords(), ship.Attack_vector.get_cords())}")
 
+    # for ship in battle_state.My:
+    #     print(ship.Id, ship.Position.get_cords())
+    #     pos_l = list(ship.Next_iteration_ship_points.items())
+    #     pprint_pos_list = [pos_l[n: n + 3] for n in range(0, len(pos_l), 3)]
+    #     print(*pprint_pos_list, sep='\n')
 '''
 
 
