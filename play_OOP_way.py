@@ -5,11 +5,11 @@ from typing import List, Optional
 
 messages = []
 move_selection_weights_dict = {
-    'background_weight_coefficient': 3,  # 1-5
-    'enemy_con_weight_coefficient': 1,  # 1-8
-    'allies_focused_weight_coefficient': 1,  # 1-8
-    'enemy_distance_weights': {"small": -1, "medium": 1, "large": 0, "neutral": 2},  # 1-8
-    'allies_distance_weights': 1  # 1-8
+    'background_weight_coefficient': 3,
+    'enemy_con_weight_coefficient': 1,
+    'allies_focused_weight_coefficient': 1,
+    'enemy_distance_weights': {"small": -1, "medium": 1, "large": 0, "neutral": 2},
+    'allies_distance_weights': 1
 }
 
 
