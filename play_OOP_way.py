@@ -4,11 +4,11 @@ from enum import Enum
 from typing import List, Optional
 
 start_position_ship = {
-    0: (0, 2, 2),
-    1: (0, 0, 4),
-    2: (2, 0, 2),
-    3: (2, 2, 0),
-    4: (4, 0, 0)
+    0: (0, 3, 3),
+    1: (0, 0, 5),
+    2: (3, 0, 3),
+    3: (3, 3, 0),
+    4: (5, 0, 0)
 }
 is_on_start_position = False
 check_reverse = False
@@ -400,14 +400,14 @@ class BattleState(JSONCapability):
         closest_ship_1_point = min(
             [(point, manhattan_distance(point, ship_target_cords))
              for point in ship_1_collision_pos], key=lambda p: p[1])[0]
-        res_chebyshev_distance = min(
+        res_manhattan_distance = min(
             [manhattan_distance(point, closest_ship_1_point)
              for point in ship_2_collision_pos]) - 1
 
         add_message(f'C {ship_attack_cords} from {closest_ship_1_point} to ' +
-                    f'{ship_target_cords} d {res_chebyshev_distance}')
+                    f'{ship_target_cords} d {res_manhattan_distance}')
 
-        return res_chebyshev_distance
+        return res_manhattan_distance
 
     @staticmethod
     # TODO TASTING FUNC
@@ -679,9 +679,15 @@ def make_turn(data: dict) -> BattleOutput:
                 my_ships_targets[ship_id]))[:count_focused_ships]
         op_ships_focused[e_ship_id] = set(focused_ships)
     while any(op_ships_focused.values()):
-        sorted_op_ships_focused = sorted(
-            op_ships_focused.items(), key=lambda elem: len(elem[1]),
-            reverse=True)
+        sorted_op_ships_focused = [
+            (e_ship_id, len(f_ships), sum(map(
+                lambda f_ship: battle_state.get_distance_ships(
+                    battle_state.Ships_id_dict[e_ship_id].Position.get_cords(),
+                    ship_pos_dict[f_ship]), f_ships)) / len(f_ships) if f_ships else 30)
+            for e_ship_id, f_ships in op_ships_focused.items()]
+        sorted_op_ships_focused.sort(key=lambda elem: (elem[1], elem[2]), reverse=True)
+        sorted_op_ships_focused = list(map(
+            lambda elem: (elem[0], op_ships_focused[elem[0]]), sorted_op_ships_focused))
         for e_ship_id, f_ships in sorted_op_ships_focused:
             if f_ships:
                 for f_ship_id in list(f_ships):

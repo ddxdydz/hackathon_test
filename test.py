@@ -73,5 +73,8 @@ for p in cube[18:28]:
     field[p[1] + 1][p[0] + 1] = 1
 print(*field, sep='\n')'''
 
-d = {1: 'd', 2: 'g', 3: 'a'}
-print(tuple(d.items()))
+from numpy import nanmean
+
+
+print(sum(map(lambda e: e, [1, 2, 3])))
+
