@@ -597,7 +597,7 @@ def make_turn(data: dict) -> BattleOutput:
                 if battle_state.get_distance_ships(
                         cur_my_ship.Position.get_cords(), nearest_enemy.Position.get_cords()) < \
                         nearest_enemy_dist:
-                    enemy_distance_weight = 10
+                    enemy_distance_weight = 2
             cur_my_ship.Next_iteration_ship_points[possible_pos] += \
                 enemy_distance_weight
             # Add weights: allies distance
@@ -626,7 +626,7 @@ def make_turn(data: dict) -> BattleOutput:
                         ship_pos_dict[friendly_ship.Id]) + cur_my_ship_cords
                     if len(set(sum_a_cords)) != len(sum_a_cords):
                         cur_my_ship.Next_iteration_ship_points[
-                            ship_pos_dict[cur_my_ship.Id]] += -4
+                            ship_pos_dict[cur_my_ship.Id]] += -5
                         ship_pos_dict[cur_my_ship.Id], _ = max(
                             cur_my_ship.Next_iteration_ship_points.items(),
                             key=lambda p: p[1])
@@ -634,6 +634,13 @@ def make_turn(data: dict) -> BattleOutput:
                         break
     for ship in battle_state.My:
         ship.Move_vector = Vector(*ship_pos_dict[ship.Id])
+
+    print(*list(ship_pos_dict.items()), sep='\n')
+    for ship in battle_state.My:
+        print(ship.Id, ship.Position.get_cords())
+        pos_l = list(ship.Next_iteration_ship_points.items())
+        pprint_pos_list = [pos_l[n: n + 3] for n in range(0, len(pos_l), 3)]
+        print(*pprint_pos_list, sep='\n')
 
     # Forming command attack:
     my_ship_collision = {
@@ -661,9 +668,9 @@ def make_turn(data: dict) -> BattleOutput:
                 my_ships_targets[cur_my_ship.Id].add(e_ship.Id)
     enemies_hp_dict = {e_ship.Id: e_ship.Health for e_ship in battle_state.Opponent}
     for e_ship_id in op_ships_focused.keys():  # Check count focused ships
-        count_focused_ships = enemies_hp_dict[e_ship_id] // 4 + 1 \
-                if enemies_hp_dict[e_ship_id] / 4 != float(enemies_hp_dict[e_ship_id] // 4) else \
-                enemies_hp_dict[e_ship_id] // 4
+        count_focused_ships = enemies_hp_dict[e_ship_id] // 5 + 1 \
+                if enemies_hp_dict[e_ship_id] / 5 != float(enemies_hp_dict[e_ship_id] // 5) else \
+                enemies_hp_dict[e_ship_id] // 5
         focused_ships = sorted(
             op_ships_focused[e_ship_id], key=lambda ship_id: len(
                 my_ships_targets[ship_id]))[:count_focused_ships]
@@ -722,7 +729,7 @@ def local_test_play_game():
         elif 'My' in line:
             import time
             start_time = time.time()
-            print(make_turn(line))
+            make_turn(line)
             print("--- %s seconds ---" % (time.time() - start_time))
             # json_output = json.dumps(output, default=lambda x: x.to_json(), ensure_ascii=False)
         input()
@@ -739,4 +746,4 @@ def play_game():
 
 
 if __name__ == '__main__':
-    local_test_play_game()
+    play_game()
