@@ -3,7 +3,7 @@
         {
             "Id": 0,
             "Velocity": "0/0/0",
-            "Position": "0/0/0",
+            "Position": "0/4/0",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -38,7 +38,7 @@
         {
             "Id": 1,
             "Velocity": "0/0/0",
-            "Position": "2/0/0",
+            "Position": "1/2/0",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -73,7 +73,7 @@
         {
             "Id": 2,
             "Velocity": "0/0/0",
-            "Position": "4/0/0",
+            "Position": "1/0/2",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -108,7 +108,7 @@
         {
             "Id": 3,
             "Velocity": "0/0/0",
-            "Position": "6/0/0",
+            "Position": "3/0/0",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -143,7 +143,7 @@
         {
             "Id": 4,
             "Velocity": "0/0/0",
-            "Position": "8/0/0",
+            "Position": "5/0/0",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -180,31 +180,31 @@
         {
             "Id": 10000,
             "Velocity": "0/0/0",
-            "Position": "15/5/5",
+            "Position": "19/9/9",
             "Health": 100
         },
         {
             "Id": 10001,
             "Velocity": "0/0/0",
-            "Position": "14/5/5",
+            "Position": "16/9/9",
             "Health": 100
         },
         {
             "Id": 10002,
             "Velocity": "0/0/0",
-            "Position": "10/8/7",
+            "Position": "12/12/11",
             "Health": 100
         },
         {
             "Id": 10003,
             "Velocity": "0/0/0",
-            "Position": "1/5/15",
+            "Position": "3/9/19",
             "Health": 100
         },
         {
             "Id": 10004,
             "Velocity": "0/0/0",
-            "Position": "1/9/15",
+            "Position": "3/13/19",
             "Health": 100
         }
     ],

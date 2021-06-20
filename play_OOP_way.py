@@ -332,12 +332,14 @@ class BattleState(JSONCapability):
     My: List[Ship]
     Opponent: List[Ship]
     Ships_collision_pos: dict
+    Ships_id_dict: dict
     # Predict_enemy_pos: dict
 
     @classmethod
     def from_json(cls, data):
         my = list(map(Ship.from_json, data['My']))
         opponent = list(map(Ship.from_json, data['Opponent']))
+        ships_id_dict = {ship.Id: ship for ship in my + opponent}
         fire_infos = list(map(FireInfo.from_json, data['FireInfos']))
 
         # Fill default_dangerous_ships values
@@ -371,7 +373,7 @@ class BattleState(JSONCapability):
                 max_iter=2)[-1]
         '''
 
-        return cls(fire_infos, my, opponent, ships_collision_pos)
+        return cls(fire_infos, my, opponent, ships_collision_pos, ships_id_dict)
 
     @staticmethod
     def get_all_blocks_pos(s_cords: tuple, level: int = 0) -> tuple:
@@ -457,6 +459,13 @@ class BattleState(JSONCapability):
             key=lambda ship: ship[1])
         return dangerous_ships
 
+    @staticmethod
+    def get_nearest_enemy(ship_cords: tuple, enemy_ships_list: list) -> tuple:
+        return min(map(lambda e_s: (
+            e_s, BattleState.get_distance_ships(
+                ship_cords, e_s.Position.get_cords())), enemy_ships_list),
+                   key=lambda s: s[1])
+
     def get_sorted_my_ships(self) -> list:
         # Sort the ships according to the number of enemies around func
         return sorted(
@@ -504,19 +513,19 @@ def make_turn(data: dict) -> BattleOutput:
 
     # Realization of movement to a given starting position:
     if not is_on_start_position:
+        # Check Reverse
+        if not check_reverse:
+            if battle_state.My[0].Position.get_cords()[0] > 15:
+                start_position_ship = \
+                    {key: tuple(30 - value[n] - 2 for n in range(len(value)))
+                     for key, value in start_position_ship.items()}
+            check_reverse = True
         # Checking occupied positions
         if all(map(lambda n_ship:
                    battle_state.My[n_ship].Position.get_cords() == start_position_ship[n_ship],
                    range(len(battle_state.My)))):
             is_on_start_position = True
         else:
-            # Check Reverse
-            if not check_reverse:
-                if battle_state.My[0].Position.get_cords()[0] > 15:
-                    start_position_ship = \
-                        {key: tuple(30 - value[n] - 2 for n in range(len(value)))
-                         for key, value in start_position_ship.items()}
-                check_reverse = True
             # Move detection
             for num_ship, cur_my_ship in enumerate(battle_state.My):
                 do_move = True
@@ -582,13 +591,20 @@ def make_turn(data: dict) -> BattleOutput:
                     enemy_distance_weight = 2
                 elif closest_enemy_distance == 5:
                     enemy_distance_weight = 1
+            else:
+                nearest_enemy, nearest_enemy_dist = battle_state.get_nearest_enemy(
+                    possible_pos, battle_state.Opponent)
+                if battle_state.get_distance_ships(
+                        cur_my_ship.Position.get_cords(), nearest_enemy.Position.get_cords()) < \
+                        nearest_enemy_dist:
+                    enemy_distance_weight = 10
             cur_my_ship.Next_iteration_ship_points[possible_pos] += \
                 enemy_distance_weight
             # Add weights: allies distance
             allies_distance_weight = 0
             _, closest_allies_distance = battle_state.get_dangerous_ships(
                 possible_pos, battle_state.My, trigger_dist=3)[0]
-            if closest_allies_distance >= 1:
+            if 1 <= closest_allies_distance <= 3:
                 allies_distance_weight = 1
             cur_my_ship.Next_iteration_ship_points[possible_pos] += \
                 allies_distance_weight
@@ -651,33 +667,42 @@ def make_turn(data: dict) -> BattleOutput:
         focused_ships = sorted(
             op_ships_focused[e_ship_id], key=lambda ship_id: len(
                 my_ships_targets[ship_id]))[:count_focused_ships]
-        op_ships_focused[e_ship_id] = focused_ships
-    while all(op_ships_focused.values()):
-        for e_ship, f_ships in sorted(op_ships_focused.items(), key=lambda elem: len(elem[1]), reverse=True):
-            for f_ship in f_ships:
-                f_ship.Attack_vector = e_ship.Position
+        op_ships_focused[e_ship_id] = set(focused_ships)
+    while any(op_ships_focused.values()):
+        sorted_op_ships_focused = sorted(
+            op_ships_focused.items(), key=lambda elem: len(elem[1]),
+            reverse=True)
+        for e_ship_id, f_ships in sorted_op_ships_focused:
             if f_ships:
-                for f_ship in f_ships:
-                    for ef_ship in op_ships_focused.keys():
-                        op_ships_focused[ef_ship] = \
-                            set(op_ships_focused[ef_ship]) - set(f_ship)
+                for f_ship_id in list(f_ships):
+                    f_ship = battle_state.Ships_id_dict[f_ship_id]
+                    e_ship = battle_state.Ships_id_dict[e_ship_id]
+                    f_ship.Attack_vector = e_ship.Position
+                    op_ships_focused[e_ship_id].remove(f_ship_id)
                 break
+
+    # TODO TESTING
+    for ship in battle_state.My:
+        add_message(f"ATTACK ID: {ship.Id} P: {ship.Position} T: {ship.Attack_vector} " +
+                    f"D: {battle_state.get_distance_ships(ship.Position.get_cords(), ship.Attack_vector.get_cords())}")
 
     # Final formation main part output:
     for cur_my_ship in battle_state.My:
         battle_output.UserCommands.append(
             UserCommand(Command="MOVE", Parameters=MoveCommandParameters(
                 cur_my_ship.Id, cur_my_ship.Move_vector)))
-        guns = [x for x in cur_my_ship.Equipment if isinstance(x, GunBlock)]
-        if guns:
-            battle_output.UserCommands.append(
-                UserCommand(Command="ATTACK", Parameters=AttackCommandParameters(
-                    cur_my_ship.Id, guns[0].Name, cur_my_ship.Attack_vector)))
+        if EquipmentType.Gun in cur_my_ship.Equipment.keys():
+            if cur_my_ship.Attack_vector.get_cords() not in (
+                    cur_my_ship.Position.get_cords(), cur_my_ship.Move_vector.get_cords()):
+                battle_output.UserCommands.append(
+                    UserCommand(Command="ATTACK", Parameters=AttackCommandParameters(
+                        cur_my_ship.Id, cur_my_ship.Equipment[
+                            EquipmentType.Gun].Name, cur_my_ship.Attack_vector)))
 
     # Add debugging message in output
     battle_output.Message = ''
     for message in messages:
-        if (len(message) + len(battle_output.Message)) < 3600:
+        if (len(message) + len(battle_output.Message)) < 3000:
             battle_output.Message += message
             continue
         break
@@ -697,9 +722,9 @@ def local_test_play_game():
         elif 'My' in line:
             import time
             start_time = time.time()
-            output = make_turn(line)
+            print(make_turn(line))
             print("--- %s seconds ---" % (time.time() - start_time))
-            json_output = json.dumps(output, default=lambda x: x.to_json(), ensure_ascii=False)
+            # json_output = json.dumps(output, default=lambda x: x.to_json(), ensure_ascii=False)
         input()
 
 
@@ -714,4 +739,4 @@ def play_game():
 
 
 if __name__ == '__main__':
-    play_game()
+    local_test_play_game()
