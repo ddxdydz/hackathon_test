@@ -635,7 +635,6 @@ def make_turn(data: dict) -> BattleOutput:
     for ship in battle_state.My:
         ship.Move_vector = Vector(*ship_pos_dict[ship.Id])
 
-    print(*list(ship_pos_dict.items()), sep='\n')
     for ship in battle_state.My:
         print(ship.Id, ship.Position.get_cords())
         pos_l = list(ship.Next_iteration_ship_points.items())
@@ -746,4 +745,4 @@ def play_game():
 
 
 if __name__ == '__main__':
-    play_game()
+    local_test_play_game()
