@@ -512,6 +512,7 @@ def make_turn(data: dict) -> BattleOutput:
     battle_output.UserCommands = []
 
     # Realization of movement to a given starting position:
+    is_on_start_position = True
     if not is_on_start_position:
         # Check Reverse
         if not check_reverse:
@@ -634,12 +635,6 @@ def make_turn(data: dict) -> BattleOutput:
                         break
     for ship in battle_state.My:
         ship.Move_vector = Vector(*ship_pos_dict[ship.Id])
-
-    for ship in battle_state.My:
-        print(ship.Id, ship.Position.get_cords())
-        pos_l = list(ship.Next_iteration_ship_points.items())
-        pprint_pos_list = [pos_l[n: n + 3] for n in range(0, len(pos_l), 3)]
-        print(*pprint_pos_list, sep='\n')
 
     # Forming command attack:
     my_ship_collision = {
