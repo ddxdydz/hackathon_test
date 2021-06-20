@@ -3,12 +3,19 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import List, Optional
 
+# start_position_ship = {
+#     0: (0, 8, 4),
+#     1: (0, 4, 8),
+#     2: (4, 4, 4),
+#     3: (4, 8, 0),
+#     4: (8, 4, 0)
+# }
 start_position_ship = {
-    0: (0, 8, 4),
-    1: (0, 4, 8),
-    2: (6, 0, 6),
-    3: (4, 8, 0),
-    4: (8, 4, 0)
+    0: (0, 0, 0),
+    1: (2, 0, 0),
+    2: (4, 0, 0),
+    3: (6, 0, 0),
+    4: (8, 0, 0)
 }
 is_on_start_position = False
 check_reverse = False
@@ -264,11 +271,11 @@ class Ship(JSONCapability):
     Velocity: Vector
     Move_vector: Vector
     Attack_vector: Vector
-    Next_iteration_ship_points: dict[tuple: int]
+    Next_iteration_ship_points: dict
     Default_dangerous_ships: list = None
     Energy: Optional[int] = None
     Health: Optional[int] = None
-    Equipment: dict[EquipmentType: EquipmentBlock] = None
+    Equipment: dict = None
 
     @classmethod
     def from_json(cls, data):
@@ -288,8 +295,7 @@ class Ship(JSONCapability):
         row_1 = tuple((st_p[0] + n, st_p[1], st_p[2]) for n in range(3))
         stack_1 = tuple((p[0], p[1] + n, p[2]) for n in range(3) for p in row_1)
         cube = tuple((p[0], p[1], p[2] + n) for n in range(3) for p in stack_1)
-        data['Next_iteration_ship_points'] = {
-            data['Next_iteration_ship_points'][p]: 0 for p in cube}
+        data['Next_iteration_ship_points'] = {p: 0 for p in cube}
         data['Next_iteration_ship_points'][data['Position'].get_cords()] -= 1
 
         return cls(**data)
@@ -512,11 +518,29 @@ def make_turn(data: dict) -> BattleOutput:
                          for key, value in start_position_ship.items()}
                 check_reverse = True
             # Move detection
-            for num_ship, ship in enumerate(battle_state.My):
-                battle_output.UserCommands.append(
-                    UserCommand(Command="MOVE", Parameters=MoveCommandParameters(
-                        ship.Id, Vector(*start_position_ship[num_ship]))))
-            battle_output.Message = ''
+            for num_ship, cur_my_ship in enumerate(battle_state.My):
+                do_move = True
+                cur_my_ship.add_correct_move(Vector(*start_position_ship[num_ship]))
+                # Check the allies distance to prevent a collision
+                cur_friendly_ship_cords = \
+                    battle_state.get_all_blocks_pos(cur_my_ship.Move_vector.get_cords())
+                for friendly_ship in battle_state.My:
+                    if friendly_ship.Id != cur_my_ship.Id:
+                        sum_a_cords = battle_state.Ships_collision_pos[friendly_ship.Id] + \
+                                      cur_friendly_ship_cords
+                        if len(set(sum_a_cords)) != len(sum_a_cords):
+                            do_move = False
+                            break
+                if do_move:
+                    # Updating the battle_state.Ships_collision_pos
+                    battle_state.Ships_collision_pos[cur_my_ship.Id] = \
+                        battle_state.get_all_blocks_pos(
+                            cur_my_ship.Move_vector.get_cords())
+
+                    battle_output.UserCommands.append(
+                        UserCommand(Command="MOVE", Parameters=MoveCommandParameters(
+                            cur_my_ship.Id, cur_my_ship.Move_vector)))
+            battle_output.Message = f"To starting position..."
             messages.clear()
             return battle_output
 
@@ -603,13 +627,14 @@ def make_turn(data: dict) -> BattleOutput:
         for e_ship, _ in battle_state.get_dangerous_ships(
                 cur_my_ship.Position.get_cords(), battle_state.Opponent,
                 trigger_dist=4):
-            blaster_ray_cords = battle_state.get_coordinate_line(
+            blaster_ray_cords = tuple(battle_state.get_coordinate_line(
                 *battle_state.get_interacting_blocks(
-                    ship_pos_dict[cur_my_ship.Id], e_ship.Position.get_cords()))[1:]
+                    ship_pos_dict[cur_my_ship.Id], e_ship.Position.get_cords()))[1:])
             my_ship_ids = set(my_ship_collision.keys())
             my_ship_ids.remove(cur_my_ship.Id)
-            allies_collisions = sum(
-                my_ship_collision[f_ship_id] for f_ship_id in my_ship_ids)
+            allies_collisions = tuple()
+            for f_ship_id in my_ship_ids:
+                allies_collisions += my_ship_collision[f_ship_id]
             # Check friendly fire
             if len(set(blaster_ray_cords + allies_collisions)) == \
                     len(blaster_ray_cords + allies_collisions):
@@ -621,10 +646,10 @@ def make_turn(data: dict) -> BattleOutput:
                 if enemies_hp_dict[e_ship_id] / 4 != float(enemies_hp_dict[e_ship_id] // 4) else \
                 enemies_hp_dict[e_ship_id] // 4
         focused_ships = sorted(
-            op_ships_focused[e_ship_id], key=lambda f_ship: len(
-                my_ships_targets[f_ship.Id]))[:count_focused_ships]
+            op_ships_focused[e_ship_id], key=lambda ship_id: len(
+                my_ships_targets[ship_id]))[:count_focused_ships]
         op_ships_focused[e_ship_id] = focused_ships
-    while list(op_ships_focused.values()):
+    while all(op_ships_focused.values()):
         for e_ship, f_ships in sorted(op_ships_focused.items(), key=lambda elem: len(elem[1]), reverse=True):
             for f_ship in f_ships:
                 f_ship.Attack_vector = e_ship.Position
@@ -649,13 +674,30 @@ def make_turn(data: dict) -> BattleOutput:
     # Add debugging message in output
     battle_output.Message = ''
     for message in messages:
-        if (len(message) + len(battle_output.Message)) < 4000:
+        if (len(message) + len(battle_output.Message)) < 3600:
             battle_output.Message += message
             continue
         break
     messages.clear()
 
     return battle_output
+
+
+def local_test_play_game():
+    while True:
+        raw_line = 'BattleState_for_test.json'
+        with open(raw_line, 'r', encoding='utf8') as json_file:
+            f = json_file.read()
+            line = json.loads(f)
+        if 'PlayerId' in line:
+            print(json.dumps(make_draft(line), default=lambda x: x.to_json(), ensure_ascii=False))
+        elif 'My' in line:
+            import time
+            start_time = time.time()
+            output = make_turn(line)
+            print("--- %s seconds ---" % (time.time() - start_time))
+            json_output = json.dumps(output, default=lambda x: x.to_json(), ensure_ascii=False)
+        input()
 
 
 def play_game():
@@ -669,4 +711,4 @@ def play_game():
 
 
 if __name__ == '__main__':
-    play_game()
+    local_test_play_game()
