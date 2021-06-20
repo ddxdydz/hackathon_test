@@ -599,6 +599,7 @@ def make_turn(data: dict) -> BattleOutput:
         cur_my_ship.Next_iteration_ship_points.items(),
         key=lambda p: p[1])[0] for cur_my_ship in battle_state.My}
     while were_changes:
+        were_changes = False
         for cur_my_ship in battle_state.My:
             # Check the allies distance to prevent a collision
             cur_my_ship_cords = battle_state.get_all_blocks_pos(
@@ -613,8 +614,10 @@ def make_turn(data: dict) -> BattleOutput:
                         ship_pos_dict[cur_my_ship.Id], _ = max(
                             cur_my_ship.Next_iteration_ship_points.items(),
                             key=lambda p: p[1])
+                        were_changes = True
                         break
-            were_changes = False
+    for ship in battle_state.My:
+        ship.Move_vector = Vector(*ship_pos_dict[ship.Id])
 
     # Forming command attack:
     my_ship_collision = {
@@ -711,4 +714,4 @@ def play_game():
 
 
 if __name__ == '__main__':
-    local_test_play_game()
+    play_game()

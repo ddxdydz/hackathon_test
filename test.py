@@ -1,3 +1,13 @@
+'''
+print(*list(ship_pos_dict.items()), sep='\n')
+for ship in battle_state.My:
+    print(ship.Id, ship.Position.get_cords())
+    pos_l = list(ship.Next_iteration_ship_points.items())
+    pprint_pos_list = [pos_l[n: n + 3] for n in range(0, len(pos_l), 3)]
+    print(*pprint_pos_list, sep='\n')
+'''
+
+
 def st_pos():
     x = y = z = 12
     xy = zy = zx = (x ** 2 + y ** 2) ** 0.5
