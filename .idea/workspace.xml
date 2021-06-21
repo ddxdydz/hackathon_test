@@ -5,7 +5,6 @@
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/BattleState_for_test.json" beforeDir="false" afterPath="$PROJECT_DIR$/BattleState_for_test.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/play_OOP_way.py" beforeDir="false" afterPath="$PROJECT_DIR$/play_OOP_way.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,7 +42,7 @@
       <recent name="C:\Users\User\Documents\GitHub\hackathon_making_superintelligence\script_tests" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.test">
+  <component name="RunManager" selected="Python.play_OOP_way">
     <configuration name="brezenhams_algorithm_lines_2d" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="hackathon_making_superintelligence" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -151,8 +150,8 @@
     </configuration>
     <recent_temporary>
       <list>
-        <item itemvalue="Python.test" />
         <item itemvalue="Python.play_OOP_way" />
+        <item itemvalue="Python.test" />
         <item itemvalue="Python.brezenhams_algorithm_lines_3d_new" />
         <item itemvalue="Python.brezenhams_algorithm_lines_3d" />
         <item itemvalue="Python.brezenhams_algorithm_lines_2d" />
@@ -177,22 +176,22 @@
       <screen x="0" y="0" width="1366" height="722" />
     </state>
     <state x="419" y="163" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1366.722@0.0.1366.722" timestamp="1624241718083" />
-    <state width="1345" height="329" key="GridCell.Tab.0.bottom" timestamp="1624281113182">
+    <state width="1345" height="187" key="GridCell.Tab.0.bottom" timestamp="1624286834385">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="329" key="GridCell.Tab.0.bottom/0.0.1366.722@0.0.1366.722" timestamp="1624281113182" />
-    <state width="1345" height="329" key="GridCell.Tab.0.center" timestamp="1624281113181">
+    <state width="1345" height="187" key="GridCell.Tab.0.bottom/0.0.1366.722@0.0.1366.722" timestamp="1624286834385" />
+    <state width="1345" height="187" key="GridCell.Tab.0.center" timestamp="1624286834384">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="329" key="GridCell.Tab.0.center/0.0.1366.722@0.0.1366.722" timestamp="1624281113181" />
-    <state width="1345" height="329" key="GridCell.Tab.0.left" timestamp="1624281113181">
+    <state width="1345" height="187" key="GridCell.Tab.0.center/0.0.1366.722@0.0.1366.722" timestamp="1624286834384" />
+    <state width="1345" height="187" key="GridCell.Tab.0.left" timestamp="1624286834384">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="329" key="GridCell.Tab.0.left/0.0.1366.722@0.0.1366.722" timestamp="1624281113181" />
-    <state width="1345" height="329" key="GridCell.Tab.0.right" timestamp="1624281113181">
+    <state width="1345" height="187" key="GridCell.Tab.0.left/0.0.1366.722@0.0.1366.722" timestamp="1624286834384" />
+    <state width="1345" height="187" key="GridCell.Tab.0.right" timestamp="1624286834385">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="329" key="GridCell.Tab.0.right/0.0.1366.722@0.0.1366.722" timestamp="1624281113181" />
+    <state width="1345" height="187" key="GridCell.Tab.0.right/0.0.1366.722@0.0.1366.722" timestamp="1624286834385" />
     <state width="1345" height="220" key="GridCell.Tab.1.bottom" timestamp="1624277681754">
       <screen x="0" y="0" width="1366" height="722" />
     </state>

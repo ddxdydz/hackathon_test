@@ -11,9 +11,9 @@ move_selection_weights_dict = {
     'allies_focused_weight_coefficient': 2,
     'enemy_distance_weights': {
         "small": -1,
-        "medium": 3,
-        "large": 2,
-        "neutral": 1
+        "medium": 6,
+        "large": 4,
+        "neutral": 2
     },
     'allies_distance_weight': 2,
     'friendly_fire__weights': {
@@ -22,6 +22,7 @@ move_selection_weights_dict = {
         'ally_ship_targets': 1
     }
 }
+in_center = False
 
 
 class JSONCapability:
@@ -387,9 +388,6 @@ class BattleState(JSONCapability):
         res_chebyshev_distance = min(
             [chebyshev_distance(point, closest_ship_1_point)
              for point in ship_2_collision_pos]) - 1
-
-        add_message(f'D CHEB {ship_1_cords}&{ship_2_cords}={res_chebyshev_distance}')
-
         return res_chebyshev_distance
 
     @staticmethod
@@ -431,9 +429,25 @@ def make_draft(data: dict) -> DraftChoice:
 
 
 def make_turn(data: dict) -> BattleOutput:
+    global in_center
     battle_state = BattleState.from_json(data)
     battle_output = BattleOutput()
     battle_output.UserCommands = []
+
+    # Realization of fast movement to the center
+    # if not in_center:
+    #     if battle_state.get_dangerous_ships(
+    #             battle_state.My[-1].Position.get_cords(),
+    #             battle_state.Opponent, trigger_dist=11):
+    #         in_center = True
+    #     else:
+    #         for friendly_ship in battle_state.My:
+    #             battle_output.UserCommands.append(
+    #                 UserCommand(Command="MOVE", Parameters=MoveCommandParameters(
+    #                     friendly_ship.Id, Vector(15, 15, 15))))
+    #             battle_output.Message = f"To center..."
+    #             messages.clear()
+    #         return battle_output
 
     # Forming move commands cycle:
     for cur_my_ship in battle_state.My:  # we could sort it
@@ -464,7 +478,7 @@ def make_turn(data: dict) -> BattleOutput:
                 to_center_weight
             # Add weights: enemy concentration count
             con_dangerous_ships = battle_state.get_dangerous_ships(
-                possible_pos, battle_state.Opponent, trigger_dist=6)
+                possible_pos, battle_state.Opponent, trigger_dist=5)
             weight_enemy_con_coefficient = \
                 move_selection_weights_dict['enemy_con_weight_coefficient']
             weight_enemy_concentration = -(len(con_dangerous_ships) - 1) * weight_enemy_con_coefficient \
@@ -494,7 +508,7 @@ def make_turn(data: dict) -> BattleOutput:
             # Add weights: enemy distance
             enemy_distance_weight = -2
             e_dist_dangerous_ships = battle_state.get_dangerous_ships(
-                possible_pos, battle_state.Opponent, trigger_dist=5)
+                possible_pos, battle_state.Opponent, trigger_dist=6)
             if e_dist_dangerous_ships:
                 _, closest_enemy_distance = \
                     sorted(e_dist_dangerous_ships,
@@ -506,7 +520,7 @@ def make_turn(data: dict) -> BattleOutput:
                 elif closest_enemy_distance in (3, 4):
                     enemy_distance_weight = move_selection_weights_dict[
                         'enemy_distance_weights']['medium']
-                elif closest_enemy_distance == 5:
+                elif closest_enemy_distance in (5, 6):
                     enemy_distance_weight = move_selection_weights_dict[
                         'enemy_distance_weights']['large']
             else:
@@ -594,6 +608,12 @@ def make_turn(data: dict) -> BattleOutput:
     for ship in battle_state.My:
         ship.Move_vector = Vector(*ship_pos_dict[ship.Id])
 
+    # for ship in battle_state.My:
+    #     print(ship.Id, ship.Position.get_cords())
+    #     pos_l = list(ship.Next_iteration_ship_points.items())
+    #     pprint_pos_list = [pos_l[n: n + 3] for n in range(0, len(pos_l), 3)]
+    #     print(*pprint_pos_list, sep='\n')
+
     # Forming command attack:
     my_ship_collision = {
         f_ship.Id: battle_state.get_all_blocks_pos(ship_pos_dict[f_ship.Id])
@@ -660,7 +680,7 @@ def make_turn(data: dict) -> BattleOutput:
                             EquipmentType.Gun].Name, cur_my_ship.Attack_vector)))
 
     # Add debugging message in output
-    battle_output.Message = ''
+    battle_output.Message = f"To battle..."
     for message in messages:
         if (len(message) + len(battle_output.Message)) < 3000:
             battle_output.Message += message
