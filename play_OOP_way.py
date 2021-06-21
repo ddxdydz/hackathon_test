@@ -6,10 +6,10 @@ from typing import List, Optional
 messages = []
 move_selection_weights_dict = {
     'background_weight_coefficient': 2,
-    'enemy_con_weight_coefficient': 1,
-    'allies_focused_weight_coefficient': 1,
-    'enemy_distance_weights': {"small": -1, "medium": 1, "large": 0, "neutral": 4},
-    'allies_distance_weight': 1
+    'enemy_con_weight_coefficient': 2,
+    'allies_focused_weight_coefficient': 2,
+    'enemy_distance_weights': {"small": -1, "medium": 3, "large": 2, "neutral": 1},
+    'allies_distance_weight': 2
 }
 
 
@@ -355,59 +355,6 @@ class BattleState(JSONCapability):
         return res_s
 
     @staticmethod
-    # TODO TASTING FUNC
-    def get_distance_ships(ship_1_cords: tuple, ship_2_cords: tuple) -> int:
-        ship_1_collision_pos = BattleState.get_all_blocks_pos(ship_1_cords)
-        ship_2_collision_pos = BattleState.get_all_blocks_pos(ship_2_cords)
-        closest_ship_1_point = min(
-            [(point, chebyshev_distance(point, ship_2_cords))
-             for point in ship_1_collision_pos], key=lambda p: p[1])[0]
-        res_chebyshev_distance = min(
-            [chebyshev_distance(point, closest_ship_1_point)
-             for point in ship_2_collision_pos]) - 2
-
-        add_message(f'D {ship_1_cords}&{ship_2_cords}={res_chebyshev_distance}')
-
-        return res_chebyshev_distance
-
-    @staticmethod
-    # TODO TASTING FUNC
-    def get_min_attack_distance(ship_attack_cords: tuple, ship_target_cords: tuple) -> int:
-        ship_1_collision_pos = BattleState.get_all_blocks_pos(ship_attack_cords)
-        ship_2_collision_pos = BattleState.get_all_blocks_pos(ship_target_cords)
-        closest_ship_1_point = min(
-            [(point, manhattan_distance(point, ship_target_cords))
-             for point in ship_1_collision_pos], key=lambda p: p[1])[0]
-        res_manhattan_distance = min(
-            [manhattan_distance(point, closest_ship_1_point)
-             for point in ship_2_collision_pos]) - 1
-
-        add_message(f'C {ship_attack_cords} from {closest_ship_1_point} to ' +
-                    f'{ship_target_cords} d {res_manhattan_distance}')
-
-        return res_manhattan_distance
-
-    @staticmethod
-    # TODO TASTING FUNC
-    def get_coordinate_line(ship_1_cords, ship_2_cords, inc_dr_axis=0, max_iter=32) -> list:
-        ship_1_collision_pos = BattleState.get_all_blocks_pos(ship_1_cords)
-        ship_2_collision_pos = BattleState.get_all_blocks_pos(ship_2_cords)
-        closest_ship_1_point = min(
-            [(point, chebyshev_distance(point, ship_2_cords))
-             for point in ship_1_collision_pos], key=lambda p: p[1])[0]
-        closest_ship_2_point = min(
-            [(point, chebyshev_distance(point, closest_ship_1_point))
-             for point in ship_2_collision_pos], key=lambda p: p[1])[0]
-        cords_list = bresenham_3d(
-            closest_ship_1_point, closest_ship_2_point,
-            inc_dr_axis, max_iter)
-
-        add_message(f'F(cord_line)-{ship_1_cords},{ship_2_cords},{inc_dr_axis}={cords_list[-inc_dr_axis - 2:]}')
-
-        return cords_list
-
-    @staticmethod
-    # TODO TESTING FUNC
     def get_interacting_blocks(ship_1_cords, ship_2_cords) -> tuple:
         ship_1_collision_pos = BattleState.get_all_blocks_pos(ship_1_cords)
         ship_2_collision_pos = BattleState.get_all_blocks_pos(ship_2_cords)
@@ -418,6 +365,30 @@ class BattleState(JSONCapability):
             [(point, chebyshev_distance(point, closest_ship_1_point))
              for point in ship_2_collision_pos], key=lambda p: p[1])[0]
         return closest_ship_1_point, closest_ship_2_point
+
+    @staticmethod
+    def get_distance_ships(ship_1_cords: tuple, ship_2_cords: tuple) -> int:
+        ship_1_collision_pos = BattleState.get_all_blocks_pos(ship_1_cords)
+        ship_2_collision_pos = BattleState.get_all_blocks_pos(ship_2_cords)
+        closest_ship_1_point = min(
+            [(point, chebyshev_distance(point, ship_2_cords))
+             for point in ship_1_collision_pos], key=lambda p: p[1])[0]
+        res_chebyshev_distance = min(
+            [chebyshev_distance(point, closest_ship_1_point)
+             for point in ship_2_collision_pos]) - 1
+
+        add_message(f'D CHEB {ship_1_cords}&{ship_2_cords}={res_chebyshev_distance}')
+
+        return res_chebyshev_distance
+
+    @staticmethod
+    def get_coordinate_line(ship_1_cords, ship_2_cords, inc_dr_axis=0, max_iter=32) -> list:
+        closest_ship_1_point, closest_ship_2_point = \
+            BattleState.get_interacting_blocks(ship_1_cords, ship_2_cords)
+        cords_list = bresenham_3d(
+            closest_ship_1_point, closest_ship_2_point,
+            inc_dr_axis, max_iter)
+        return cords_list
 
     @staticmethod
     def get_dangerous_ships(ship_cords: tuple, enemies_list: list, trigger_dist=5):
@@ -436,34 +407,6 @@ class BattleState(JSONCapability):
             e_s, BattleState.get_distance_ships(
                 ship_cords, e_s.Position.get_cords())), enemy_ships_list),
                    key=lambda s: s[1])
-
-    def get_sorted_my_ships(self) -> list:
-        # Sort the ships according to the number of enemies around func
-        return sorted(
-            self.My,
-            key=lambda my_ship: len(
-                [1 for enemy_ship in self.Opponent
-                 if self.get_distance_ships(
-                    my_ship.Position.get_cords(),
-                    enemy_ship.Position.get_cords()) < 6]
-            )
-        )
-
-    def get_sorted_enemies_dist_by_ship(self, my_ship: Ship) -> dict:
-        enemy_distance_by_ship = {
-            'ship': my_ship,
-            'enemies': []
-        }
-        sorted_enemy_list = []
-        for enemy_ship in self.Opponent:
-            sorted_enemy_list.append(
-                (enemy_ship, self.get_distance_ships(
-                    enemy_ship.Position.get_cords(),
-                    my_ship.Position.get_cords()))
-            )
-        sorted_enemy_list.sort(key=lambda elem: elem[1])
-        enemy_distance_by_ship['enemies'] = sorted_enemy_list
-        return enemy_distance_by_ship
 
 
 # endregion
@@ -490,7 +433,8 @@ def make_turn(data: dict) -> BattleOutput:
             else:
                 weight_background_coefficient = \
                     move_selection_weights_dict['background_weight_coefficient']
-                check_background_weight, n_min, n_max = -8, 0, 28
+                check_background_weight = -5
+                n_min, n_max = 0, 28
                 while check_background_weight:
                     n_min, n_max = n_min + 1, n_max - 1
                     check_background_weight += 1
@@ -499,18 +443,19 @@ def make_turn(data: dict) -> BattleOutput:
                             check_background_weight * weight_background_coefficient
                         break
             # Add weights: enemy concentration count
-            dangerous_ships = battle_state.get_dangerous_ships(
+            con_dangerous_ships = battle_state.get_dangerous_ships(
                 possible_pos, battle_state.Opponent, trigger_dist=6)
             weight_enemy_con_coefficient = \
                 move_selection_weights_dict['enemy_con_weight_coefficient']
-            weight_enemy_concentration = -(len(dangerous_ships) - 1) * weight_enemy_con_coefficient \
-                if dangerous_ships else 0
+            weight_enemy_concentration = -(len(con_dangerous_ships) - 1) * weight_enemy_con_coefficient \
+                if con_dangerous_ships else 0
             cur_my_ship.Next_iteration_ship_points[possible_pos] += \
                 weight_enemy_concentration
             # Add weights: allies focused target count
             focused_weight = 0
-            for e_ship, _ in battle_state.get_dangerous_ships(
-                    possible_pos, battle_state.Opponent, trigger_dist=5):
+            foc_dangerous_ships = battle_state.get_dangerous_ships(
+                possible_pos, battle_state.Opponent, trigger_dist=6)
+            for e_ship, _ in foc_dangerous_ships:
                 enemy_dangerous_ships = e_ship.Default_dangerous_ships
                 if enemy_dangerous_ships:
                     enemy_dangerous_ships_ids = \
@@ -528,12 +473,17 @@ def make_turn(data: dict) -> BattleOutput:
                 focused_weight * allies_focused_coefficient
             # Add weights: enemy distance
             enemy_distance_weight = -2
-            if dangerous_ships:
-                _, closest_enemy_distance = dangerous_ships[0]
-                if closest_enemy_distance <= 2:
+            e_dist_dangerous_ships = battle_state.get_dangerous_ships(
+                possible_pos, battle_state.Opponent, trigger_dist=5)
+            if e_dist_dangerous_ships:
+                _, closest_enemy_distance = \
+                    sorted(e_dist_dangerous_ships,
+                           key=lambda s: len(s[0].Default_dangerous_ships),
+                           reverse=True)[0]
+                if closest_enemy_distance in (1, 2):
                     enemy_distance_weight = move_selection_weights_dict[
                         'enemy_distance_weights']['small']
-                elif 3 <= closest_enemy_distance <= 4:
+                elif closest_enemy_distance in (3, 4):
                     enemy_distance_weight = move_selection_weights_dict[
                         'enemy_distance_weights']['medium']
                 elif closest_enemy_distance == 5:
@@ -541,14 +491,9 @@ def make_turn(data: dict) -> BattleOutput:
                         'enemy_distance_weights']['large']
             else:
                 nearest_enemy, nearest_enemy_dist = battle_state.get_nearest_enemy(
-                    possible_pos, battle_state.Opponent)
-                x1 = (len(battle_state.get_coordinate_line(
-                    possible_pos, nearest_enemy.Position.get_cords())))
-                x2 = (len(battle_state.get_coordinate_line(
-                    cur_my_ship.Position.get_cords(), nearest_enemy.Position.get_cords())))
-                # if battle_state.get_distance_ships(possible_pos, nearest_enemy.Position.get_cords()) < \
-                #         nearest_enemy_dist:
-                if x1 < x2:
+                    cur_my_ship.Position.get_cords(), battle_state.Opponent)
+                if battle_state.get_distance_ships(possible_pos, nearest_enemy.Position.get_cords()) < \
+                        nearest_enemy_dist:
                     enemy_distance_weight = move_selection_weights_dict[
                         'enemy_distance_weights']['neutral']
             cur_my_ship.Next_iteration_ship_points[possible_pos] += \
@@ -569,17 +514,19 @@ def make_turn(data: dict) -> BattleOutput:
         key=lambda p: p[1])[0] for cur_my_ship in battle_state.My}
     while were_changes:
         were_changes = False
-        for cur_my_ship in battle_state.My:
+        for cur_my_ship in battle_state.My:  # TODO SORTED FUNC
             # Check the allies distance to prevent a collision
-            cur_my_ship_cords = battle_state.get_all_blocks_pos(
+            cur_my_ship_col = battle_state.get_all_blocks_pos(
                 ship_pos_dict[cur_my_ship.Id])
             for friendly_ship in battle_state.My:
                 if friendly_ship.Id != cur_my_ship.Id:
-                    sum_a_cords = battle_state.get_all_blocks_pos(
-                        ship_pos_dict[friendly_ship.Id]) + cur_my_ship_cords
+                    sum_a_cords = tuple(set(
+                        battle_state.get_all_blocks_pos(ship_pos_dict[friendly_ship.Id]) +
+                        battle_state.get_all_blocks_pos(friendly_ship.Position.get_cords()))) + \
+                                  cur_my_ship_col  # TODO fix bugs
                     if len(set(sum_a_cords)) != len(sum_a_cords):
                         cur_my_ship.Next_iteration_ship_points[
-                            ship_pos_dict[cur_my_ship.Id]] += -5
+                            ship_pos_dict[cur_my_ship.Id]] += -100
                         ship_pos_dict[cur_my_ship.Id], _ = max(
                             cur_my_ship.Next_iteration_ship_points.items(),
                             key=lambda p: p[1])
@@ -587,6 +534,12 @@ def make_turn(data: dict) -> BattleOutput:
                         break
     for ship in battle_state.My:
         ship.Move_vector = Vector(*ship_pos_dict[ship.Id])
+
+    # for ship in battle_state.My:
+    #     print(ship.Id, ship.Position.get_cords(), ship.Move_vector.get_cords())
+    #     pos_l = list(ship.Next_iteration_ship_points.items())
+    #     pprint_pos_list = [pos_l[n: n + 3] for n in range(0, len(pos_l), 3)]
+    #     print(*pprint_pos_list, sep='\n')
 
     # Forming command attack:
     my_ship_collision = {
