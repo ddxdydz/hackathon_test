@@ -203,5 +203,34 @@ def get_coordinate_line(ship_1_cords, ship_2_cords, inc_dr_axis=0, max_iter=32) 
     return cords_list
 
 
-print(f"{(11, 11, 11), (17, 17, 17)}: {get_coordinate_line((11, 11, 11), (17, 17, 17))}")
-print(get_distance_ships((11, 11, 11), (17, 17, 17)))
+# print(f"{(11, 11, 11), (17, 17, 17)}: {get_coordinate_line((11, 11, 11), (17, 17, 17))}")
+# print(get_distance_ships((11, 11, 11), (17, 17, 17)))
+move_selection_weights_dict = {
+    'background_weight_coefficient': 2,
+    'to_center_weight_coefficient': 5,
+    'enemy_con_weight_coefficient': 2,
+    'allies_focused_weight_coefficient': 2,
+    'enemy_distance_weights': {
+        "small": -1,
+        "medium": 3,
+        "large": 2,
+        "neutral": 1
+    },
+    'allies_distance_weight': 2,
+    'friendly_fire__weights': {
+        'friendly_fire_true': 1,
+        'f_f_enemy_focused': 1,
+        'ally_ship_targets': 1
+    }
+}
+
+test_cord = (15, 15, 16)
+max_axis = max(test_cord)
+if max_axis > 15:
+    max_axis = 30 - max_axis
+to_center_weight_coefficient = move_selection_weights_dict['to_center_weight_coefficient']
+to_center_weight_ = to_center_weight_coefficient if max_axis == 0 else \
+    to_center_weight_coefficient / max_axis
+
+for i in range(0, 16):
+    print(move_selection_weights_dict['to_center_weight_coefficient'] / i)
