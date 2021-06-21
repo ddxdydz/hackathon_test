@@ -9,7 +9,7 @@ is_on_start_position = False
 check_reverse = False
 
 
-# Realization of movement to a given starting position:
+'''# Realization of movement to a given starting position:
 if not is_on_start_position:
     # Check Reverse
     if not check_reverse:
@@ -49,4 +49,4 @@ if not is_on_start_position:
                         cur_my_ship.Id, cur_my_ship.Move_vector)))
         battle_output.Message = f"To starting position..."
         messages.clear()
-        return battle_output
+        return battle_output'''

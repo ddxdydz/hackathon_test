@@ -5,11 +5,11 @@ from typing import List, Optional
 
 messages = []
 move_selection_weights_dict = {
-    'background_weight_coefficient': 3,
+    'background_weight_coefficient': 2,
     'enemy_con_weight_coefficient': 1,
     'allies_focused_weight_coefficient': 1,
-    'enemy_distance_weights': {"small": -1, "medium": 1, "large": 0, "neutral": 2},
-    'allies_distance_weights': 1
+    'enemy_distance_weights': {"small": -1, "medium": 1, "large": 0, "neutral": 4},
+    'allies_distance_weight': 1
 }
 
 
@@ -344,26 +344,6 @@ class BattleState(JSONCapability):
             for ship in my + opponent
         }
 
-        # TODO IN WORK
-        '''
-        # Motion predictions for weak and frequent algorithms
-        predict_enemy_pos = {}
-        for e_ship in opponent:
-            # To verify the assumption predict
-            cur_enemy_pos = e_ship.Position.get_cords()
-            cur_enemy_vil = e_ship.Velocity.get_cords()
-            last_enemy_pos = \
-                cur_enemy_pos[0] - cur_enemy_vil[0], \
-                cur_enemy_pos[1] - cur_enemy_vil[1], \
-                cur_enemy_pos[1] - cur_enemy_vil[1]
-            predict_enemy_target = min(data["My"], key=lambda f_ship: cls.get_distance_ships(
-                e_ship.Position.get_cords(), f_ship.Position.get_cords()))
-            predict_enemy_move = bresenham_3d(
-                e_ship.Position.get_cords(),
-                predict_enemy_target.Position.get_cords(),
-                max_iter=2)[-1]
-        '''
-
         return cls(fire_infos, my, opponent, ships_collision_pos, ships_id_dict)
 
     @staticmethod
@@ -510,7 +490,7 @@ def make_turn(data: dict) -> BattleOutput:
             else:
                 weight_background_coefficient = \
                     move_selection_weights_dict['background_weight_coefficient']
-                check_background_weight, n_min, n_max = -12, 0, 28
+                check_background_weight, n_min, n_max = -8, 0, 28
                 while check_background_weight:
                     n_min, n_max = n_min + 1, n_max - 1
                     check_background_weight += 1

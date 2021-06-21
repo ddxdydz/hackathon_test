@@ -2,8 +2,10 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="245a79e2-0572-4e63-b121-3fd00caed19f" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/script_tests/brezenharm server" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/play_OOP_way.py" beforeDir="false" afterPath="$PROJECT_DIR$/play_OOP_way.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/script_tests/on_start_position_script.py" beforeDir="false" afterPath="$PROJECT_DIR$/script_tests/on_start_position_script.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -168,6 +170,10 @@
     <servers />
   </component>
   <component name="WindowStateProjectService">
+    <state x="419" y="163" key="#com.intellij.fileTypes.FileTypeChooser" timestamp="1624241718083">
+      <screen x="0" y="0" width="1366" height="722" />
+    </state>
+    <state x="419" y="163" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1366.722@0.0.1366.722" timestamp="1624241718083" />
     <state width="1345" height="230" key="GridCell.Tab.0.bottom" timestamp="1624207242899">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
