@@ -7,15 +7,15 @@ messages = []
 move_selection_weights_dict = {
     'background_weight_coefficient': 2,
     'to_center_weight_coefficient': 5,
-    'enemy_con_weight_coefficient': 2,
-    'allies_focused_weight_coefficient': 2,
+    'enemy_con_weight_coefficient': 1,
+    'allies_focused_weight_coefficient': 1,
     'enemy_distance_weights': {
         "small": -1,
-        "medium": 6,
-        "large": 4,
-        "neutral": 2
+        "medium": 2,
+        "large": 1,
+        "neutral": 1
     },
-    'allies_distance_weight': 2,
+    'allies_distance_weight': 1,
     'friendly_fire__weights': {
         'friendly_fire_true': 1,
         'f_f_enemy_focused': 1,
@@ -311,7 +311,6 @@ class Ship(JSONCapability):
         self.Move_vector = Vector(*bresenham_3d(
             self.Position.get_cords(), target.get_cords(), max_iter=2)[-1])
 
-    # TODO
     def add_correct_target(self, target_pos: Vector, target_vil: Vector):
         pass
 
@@ -434,21 +433,6 @@ def make_turn(data: dict) -> BattleOutput:
     battle_output = BattleOutput()
     battle_output.UserCommands = []
 
-    # Realization of fast movement to the center
-    # if not in_center:
-    #     if battle_state.get_dangerous_ships(
-    #             battle_state.My[-1].Position.get_cords(),
-    #             battle_state.Opponent, trigger_dist=11):
-    #         in_center = True
-    #     else:
-    #         for friendly_ship in battle_state.My:
-    #             battle_output.UserCommands.append(
-    #                 UserCommand(Command="MOVE", Parameters=MoveCommandParameters(
-    #                     friendly_ship.Id, Vector(15, 15, 15))))
-    #             battle_output.Message = f"To center..."
-    #             messages.clear()
-    #         return battle_output
-
     # Forming move commands cycle:
     for cur_my_ship in battle_state.My:  # we could sort it
         for possible_pos in cur_my_ship.Next_iteration_ship_points.keys():
@@ -478,7 +462,7 @@ def make_turn(data: dict) -> BattleOutput:
                 to_center_weight
             # Add weights: enemy concentration count
             con_dangerous_ships = battle_state.get_dangerous_ships(
-                possible_pos, battle_state.Opponent, trigger_dist=5)
+                possible_pos, battle_state.Opponent, trigger_dist=6)
             weight_enemy_con_coefficient = \
                 move_selection_weights_dict['enemy_con_weight_coefficient']
             weight_enemy_concentration = -(len(con_dangerous_ships) - 1) * weight_enemy_con_coefficient \
@@ -520,7 +504,7 @@ def make_turn(data: dict) -> BattleOutput:
                 elif closest_enemy_distance in (3, 4):
                     enemy_distance_weight = move_selection_weights_dict[
                         'enemy_distance_weights']['medium']
-                elif closest_enemy_distance in (5, 6):
+                elif closest_enemy_distance == (5, 6):
                     enemy_distance_weight = move_selection_weights_dict[
                         'enemy_distance_weights']['large']
             else:
@@ -541,7 +525,7 @@ def make_turn(data: dict) -> BattleOutput:
             cur_my_ship.Next_iteration_ship_points[possible_pos] += \
                 allies_distance_weight
 
-    # Final forming move commands:
+    # Final forming move commands:ёёёёёёёёёё
     ship_pos_dict = {cur_my_ship.Id: max(
         cur_my_ship.Next_iteration_ship_points.items(),
         key=lambda p: p[1])[0] for cur_my_ship in battle_state.My}

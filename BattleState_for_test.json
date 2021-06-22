@@ -3,7 +3,7 @@
         {
             "Id": 0,
             "Velocity": "0/0/0",
-            "Position": "21/10/11",
+            "Position": "21/11/10",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -38,7 +38,7 @@
         {
             "Id": 1,
             "Velocity": "0/0/0",
-            "Position": "21/13/10",
+            "Position": "9/9/9",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -73,7 +73,7 @@
         {
             "Id": 2,
             "Velocity": "0/0/0",
-            "Position": "11/21/10",
+            "Position": "16/21/10",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -108,7 +108,7 @@
         {
             "Id": 3,
             "Velocity": "0/0/0",
-            "Position": "16/21/10",
+            "Position": "11/21/10",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
