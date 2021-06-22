@@ -4,25 +4,6 @@ from enum import Enum
 from typing import List, Optional
 
 messages = []
-move_selection_weights_dict = {
-    'background_weight_coefficient': 2,
-    'to_center_weight_coefficient': 5,
-    'enemy_con_weight_coefficient': 1,
-    'allies_focused_weight_coefficient': 1,
-    'enemy_distance_weights': {
-        "small": -1,
-        "medium": 2,
-        "large": 1,
-        "neutral": 1
-    },
-    'allies_distance_weight': 1,
-    'friendly_fire__weights': {
-        'friendly_fire_true': 1,
-        'f_f_enemy_focused': 1,
-        'ally_ship_targets': 1
-    }
-}
-in_center = False
 
 
 class JSONCapability:
@@ -335,7 +316,6 @@ class BattleState(JSONCapability):
     Opponent: List[Ship]
     Ships_collision_pos: dict
     Ships_id_dict: dict
-    # Predict_enemy_pos: dict
 
     @classmethod
     def from_json(cls, data):
@@ -420,21 +400,56 @@ class BattleState(JSONCapability):
 # endregion
 
 
-def make_draft(data: dict) -> DraftChoice:
+def make_draft(data: dict) -> dict:
     # TODO: parse input data
     # TODO: Make draft
-    data['u'] = 1
-    return DraftChoice()
+    ship = list(filter(lambda s: s["Id"].lower() == 'starstorm', data['CompleteShips']))[0]
+    money = data["Money"]
+    count_ship = money // ship['Price']
+    if count_ship > data["MaxShipsCount"]:
+        count_ship = data["MaxShipsCount"]
+    ships = [ship['Id']] * count_ship
+    output_ships = [{"CompleteShipId": s_id} for s_id in ships]
+
+    output = {
+        "Ships": output_ships,
+        "Message": str(output_ships)
+    }
+    return output
 
 
 def make_turn(data: dict) -> BattleOutput:
-    global in_center
+    move_selection_weights_dict = {
+        'non_stop_weight': -1,
+        'background_weight_coefficient': 2,
+        'allies_focused_weight_coefficient': 2,
+        'enemy_distance_weights': {
+            "small": -1,
+            "medium": 4,
+            "large": 2,
+            "neutral": 2
+        },
+        'enemy_con_weight_coefficient': 2,
+        'allies_distance_weight': {
+            "small": 0,
+            "medium": 2,
+            "large": 2
+        },
+        'friendly_fire__weights': {
+            'friendly_fire_true': 1,
+            'f_f_enemy_focused': 1,
+            'ally_ship_targets': 1
+        }
+    }
+
     battle_state = BattleState.from_json(data)
     battle_output = BattleOutput()
     battle_output.UserCommands = []
 
     # Forming move commands cycle:
     for cur_my_ship in battle_state.My:  # we could sort it
+        cur_my_ship.Next_iteration_ship_points[cur_my_ship.Position.get_cords()] += \
+            move_selection_weights_dict['non_stop_weight']
         for possible_pos in cur_my_ship.Next_iteration_ship_points.keys():
             # Check background
             if not all(map(lambda n: 0 <= possible_pos[n] <= 28, range(3))):
@@ -450,82 +465,82 @@ def make_turn(data: dict) -> BattleOutput:
                     if not all(map(lambda n: n_min <= possible_pos[n] <= n_max, range(3))):
                         cur_my_ship.Next_iteration_ship_points[possible_pos] += \
                             check_background_weight * weight_background_coefficient
+                        add_message(str(check_background_weight * weight_background_coefficient))
                         break
-            # Add weights: to center
-            max_axis = max(possible_pos)
-            if max_axis > 15:
-                max_axis = 30 - max_axis
-            to_center_weight_coefficient = move_selection_weights_dict['to_center_weight_coefficient']
-            to_center_weight = to_center_weight_coefficient if max_axis == 0 else \
-                to_center_weight_coefficient / max_axis
+
+            # Add weight: enemy focused distance
+            enemy_focused_weight = 0
+            gun_radius = cur_my_ship.Equipment[EquipmentType.Gun].Radius
+            foc_dangerous_ships = battle_state.get_dangerous_ships(
+                possible_pos, battle_state.Opponent, trigger_dist=gun_radius)
+            if foc_dangerous_ships:  # allies focused target count
+                for e_ship, _ in foc_dangerous_ships:
+                    enemy_dangerous_ships = e_ship.Default_dangerous_ships
+                    if enemy_dangerous_ships:
+                        enemy_dangerous_ships_ids = \
+                            tuple(map(lambda f_s: f_s[0].Id, enemy_dangerous_ships))
+                        if cur_my_ship.Id in enemy_dangerous_ships_ids:
+                            my_ship_index = enemy_dangerous_ships_ids.index(cur_my_ship.Id)
+                            del enemy_dangerous_ships[my_ship_index]
+                        if len(enemy_dangerous_ships_ids) > enemy_focused_weight:
+                            enemy_focused_weight = len(enemy_dangerous_ships)
+                allies_focused_coefficient = \
+                    move_selection_weights_dict['allies_focused_weight_coefficient']
+                enemy_focused_weight *= allies_focused_coefficient
+                cur_my_ship.Next_iteration_ship_points[possible_pos] += \
+                    enemy_focused_weight
+
+            # Add weights: enemy distance
+            enemy_distance_weight = 0
+            closest_enemy = min(
+                battle_state.My, key=lambda e_s: battle_state.get_distance_ships(
+                    possible_pos, e_s.Position.get_cords()))
+            closest_enemy_distance = battle_state.get_distance_ships(
+                possible_pos, closest_enemy.Position.get_cords())
+            if closest_enemy_distance in (0, 1):
+                enemy_distance_weight = move_selection_weights_dict[
+                    'enemy_distance_weights']['small']
+            elif closest_enemy_distance in (2, 3):
+                enemy_distance_weight = move_selection_weights_dict[
+                    'enemy_distance_weights']['medium']
+            elif closest_enemy_distance == 5:
+                enemy_distance_weight = move_selection_weights_dict[
+                    'enemy_distance_weights']['large']
+            else:
+                if closest_enemy_distance < battle_state.get_distance_ships(
+                        cur_my_ship.Position.get_cords(), closest_enemy.Position.get_cords()):
+                    enemy_distance_weight = move_selection_weights_dict[
+                        'enemy_distance_weights']['neutral']
             cur_my_ship.Next_iteration_ship_points[possible_pos] += \
-                to_center_weight
+                enemy_distance_weight
+
             # Add weights: enemy concentration count
             con_dangerous_ships = battle_state.get_dangerous_ships(
-                possible_pos, battle_state.Opponent, trigger_dist=6)
+                possible_pos, battle_state.Opponent, trigger_dist=5)
             weight_enemy_con_coefficient = \
                 move_selection_weights_dict['enemy_con_weight_coefficient']
             weight_enemy_concentration = -(len(con_dangerous_ships) - 1) * weight_enemy_con_coefficient \
                 if con_dangerous_ships else 0
             cur_my_ship.Next_iteration_ship_points[possible_pos] += \
                 weight_enemy_concentration
-            # Add weights: allies focused target count
-            focused_weight = 0
-            foc_dangerous_ships = battle_state.get_dangerous_ships(
-                possible_pos, battle_state.Opponent, trigger_dist=6)
-            for e_ship, _ in foc_dangerous_ships:
-                enemy_dangerous_ships = e_ship.Default_dangerous_ships
-                if enemy_dangerous_ships:
-                    enemy_dangerous_ships_ids = \
-                        tuple(map(lambda f_s: f_s[0].Id, enemy_dangerous_ships))
-                    if cur_my_ship.Id in enemy_dangerous_ships_ids:
-                        my_ship_index = enemy_dangerous_ships_ids.index(cur_my_ship.Id)
-                        del enemy_dangerous_ships[my_ship_index]
-                else:
-                    break
-                if len(enemy_dangerous_ships) > focused_weight:
-                    focused_weight = len(enemy_dangerous_ships)
-            allies_focused_coefficient = \
-                move_selection_weights_dict['allies_focused_weight_coefficient']
-            cur_my_ship.Next_iteration_ship_points[possible_pos] += \
-                focused_weight * allies_focused_coefficient
-            # Add weights: enemy distance
-            enemy_distance_weight = -2
-            e_dist_dangerous_ships = battle_state.get_dangerous_ships(
-                possible_pos, battle_state.Opponent, trigger_dist=6)
-            if e_dist_dangerous_ships:
-                _, closest_enemy_distance = \
-                    sorted(e_dist_dangerous_ships,
-                           key=lambda s: len(s[0].Default_dangerous_ships),
-                           reverse=True)[0]
-                if closest_enemy_distance in (1, 2):
-                    enemy_distance_weight = move_selection_weights_dict[
-                        'enemy_distance_weights']['small']
-                elif closest_enemy_distance in (3, 4):
-                    enemy_distance_weight = move_selection_weights_dict[
-                        'enemy_distance_weights']['medium']
-                elif closest_enemy_distance == (5, 6):
-                    enemy_distance_weight = move_selection_weights_dict[
-                        'enemy_distance_weights']['large']
-            else:
-                nearest_enemy, nearest_enemy_dist = battle_state.get_nearest_enemy(
-                    cur_my_ship.Position.get_cords(), battle_state.Opponent)
-                if battle_state.get_distance_ships(possible_pos, nearest_enemy.Position.get_cords()) < \
-                        nearest_enemy_dist:
-                    enemy_distance_weight = move_selection_weights_dict[
-                        'enemy_distance_weights']['neutral']
-            cur_my_ship.Next_iteration_ship_points[possible_pos] += \
-                enemy_distance_weight
+
             # Add weights: allies distance
-            _, closest_allies_distance = battle_state.get_dangerous_ships(
-                possible_pos, battle_state.My, trigger_dist=5)[0]
-            allies_dist_weights = move_selection_weights_dict['allies_distance_weight']
-            allies_distance_weight = allies_dist_weights \
-                if 1 <= closest_allies_distance <= 3 else 0
+            allies_distance_weight = move_selection_weights_dict[
+                    'enemy_distance_weights']['large']
+            if len(battle_state.My) > 1:
+                closest_allies_distance = min(
+                    battle_state.My, key=lambda f_s: battle_state.get_distance_ships(
+                        possible_pos, f_s.Position.get_cords()))
+                if closest_allies_distance in (0,):
+                    allies_distance_weight = move_selection_weights_dict[
+                        'enemy_distance_weights']['small']
+                elif closest_enemy_distance in (1, 2):
+                    allies_distance_weight = move_selection_weights_dict[
+                        'enemy_distance_weights']['medium']
             cur_my_ship.Next_iteration_ship_points[possible_pos] += \
                 allies_distance_weight
 
-    # Final forming move commands:ёёёёёёёёёё
+    # Final forming move commands:
     ship_pos_dict = {cur_my_ship.Id: max(
         cur_my_ship.Next_iteration_ship_points.items(),
         key=lambda p: p[1])[0] for cur_my_ship in battle_state.My}
@@ -593,7 +608,7 @@ def make_turn(data: dict) -> BattleOutput:
         ship.Move_vector = Vector(*ship_pos_dict[ship.Id])
 
     # for ship in battle_state.My:
-    #     print(ship.Id, ship.Position.get_cords())
+    #     print(ship.Id, ship.Position.get_cords(), ship_pos_dict[ship.Id])
     #     pos_l = list(ship.Next_iteration_ship_points.items())
     #     pprint_pos_list = [pos_l[n: n + 3] for n in range(0, len(pos_l), 3)]
     #     print(*pprint_pos_list, sep='\n')
@@ -606,9 +621,10 @@ def make_turn(data: dict) -> BattleOutput:
     op_ships_focused = {e_ship.Id: set() for e_ship in battle_state.Opponent}
     my_ships_targets = {f_ship.Id: set() for f_ship in battle_state.My}
     for cur_my_ship in battle_state.My:
+        gun_radius = cur_my_ship.Equipment[EquipmentType.Gun].Radius
         for e_ship, _ in battle_state.get_dangerous_ships(
                 cur_my_ship.Position.get_cords(), battle_state.Opponent,
-                trigger_dist=6):
+                trigger_dist=gun_radius):
             blaster_ray_cords = tuple(battle_state.get_coordinate_line(
                 *battle_state.get_interacting_blocks(
                     ship_pos_dict[cur_my_ship.Id], e_ship.Position.get_cords()))[1:])
@@ -622,13 +638,6 @@ def make_turn(data: dict) -> BattleOutput:
                     len(blaster_ray_cords + allies_collisions):
                 op_ships_focused[e_ship.Id].add(cur_my_ship.Id)
                 my_ships_targets[cur_my_ship.Id].add(e_ship.Id)
-    enemies_hp_dict = {e_ship.Id: e_ship.Health for e_ship in battle_state.Opponent}
-    for e_ship_id in op_ships_focused.keys():  # Check count focused ships
-        count_focused_ships = enemies_hp_dict[e_ship_id] // 5 + 1
-        focused_ships = sorted(
-            op_ships_focused[e_ship_id], key=lambda ship_id: len(
-                my_ships_targets[ship_id]))[:count_focused_ships]
-        op_ships_focused[e_ship_id] = set(focused_ships)
     while any(op_ships_focused.values()):
         sorted_op_ships_focused = [
             (e_ship_id, len(f_ships), sum(map(
@@ -697,7 +706,7 @@ def play_game():
         raw_line = input()
         line = json.loads(raw_line)
         if 'PlayerId' in line:
-            print(json.dumps(make_draft(line), default=lambda x: x.to_json(), ensure_ascii=False))
+            print(make_draft(line))
         elif 'My' in line:
             print(json.dumps(make_turn(line), default=lambda x: x.to_json(), ensure_ascii=False))
 
