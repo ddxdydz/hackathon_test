@@ -432,8 +432,8 @@ def make_turn(data: dict) -> BattleOutput:
         'enemy_con_weight_coefficient': 2,
         'allies_distance_weight': {
             "small": 0,
-            "medium": 2,
-            "large": 2
+            "medium": 1,
+            "large": 1
         },
         'friendly_fire__weights': {
             'friendly_fire_true': 1,
@@ -450,23 +450,33 @@ def make_turn(data: dict) -> BattleOutput:
     for cur_my_ship in battle_state.My:  # we could sort it
         cur_my_ship.Next_iteration_ship_points[cur_my_ship.Position.get_cords()] += \
             move_selection_weights_dict['non_stop_weight']
+
+        # TODO FIXING BUG
         for possible_pos in cur_my_ship.Next_iteration_ship_points.keys():
-            # Check background
-            if not all(map(lambda n: 0 <= possible_pos[n] <= 28, range(3))):
-                cur_my_ship.Next_iteration_ship_points[possible_pos] += -1000
-            else:
-                weight_background_coefficient = \
-                    move_selection_weights_dict['background_weight_coefficient']
-                check_background_weight = -6
-                n_min, n_max = 0, 28
-                while check_background_weight:
-                    n_min, n_max = n_min + 1, n_max - 1
-                    check_background_weight += 1
-                    if not all(map(lambda n: n_min <= possible_pos[n] <= n_max, range(3))):
-                        cur_my_ship.Next_iteration_ship_points[possible_pos] += \
-                            check_background_weight * weight_background_coefficient
-                        add_message(str(check_background_weight * weight_background_coefficient))
-                        break
+            enemy_distance_weight = 0
+            closest_enemy = min(
+                battle_state.My, key=lambda e_s: battle_state.get_distance_ships(
+                    possible_pos, e_s.Position.get_cords()))
+            closest_enemy_distance = battle_state.get_distance_ships(
+                possible_pos, closest_enemy.Position.get_cords())
+
+            for possible_pos in cur_my_ship.Next_iteration_ship_points.keys():
+                # Check background
+                if not all(map(lambda n: 0 <= possible_pos[n] <= 28, range(3))):
+                    cur_my_ship.Next_iteration_ship_points[possible_pos] += -1000
+                else:
+                    weight_background_coefficient = \
+                        move_selection_weights_dict['background_weight_coefficient']
+                    check_background_weight = -6
+                    n_min, n_max = 0, 28
+                    while check_background_weight:
+                        n_min, n_max = n_min + 1, n_max - 1
+                        check_background_weight += 1
+                        if not all(map(lambda n: n_min <= possible_pos[n] <= n_max, range(3))):
+                            cur_my_ship.Next_iteration_ship_points[possible_pos] += \
+                                check_background_weight * weight_background_coefficient
+                            add_message(str(check_background_weight * weight_background_coefficient))
+                            break
 
             # Add weight: enemy focused distance
             enemy_focused_weight = 0
@@ -607,11 +617,11 @@ def make_turn(data: dict) -> BattleOutput:
     for ship in battle_state.My:
         ship.Move_vector = Vector(*ship_pos_dict[ship.Id])
 
-    # for ship in battle_state.My:
-    #     print(ship.Id, ship.Position.get_cords(), ship_pos_dict[ship.Id])
-    #     pos_l = list(ship.Next_iteration_ship_points.items())
-    #     pprint_pos_list = [pos_l[n: n + 3] for n in range(0, len(pos_l), 3)]
-    #     print(*pprint_pos_list, sep='\n')
+    for ship in battle_state.My:
+        print(ship.Id, ship.Position.get_cords(), ship_pos_dict[ship.Id])
+        pos_l = list(ship.Next_iteration_ship_points.items())
+        pprint_pos_list = [pos_l[n: n + 3] for n in range(0, len(pos_l), 3)]
+        print(*pprint_pos_list, sep='\n')
 
     # Forming command attack:
     my_ship_collision = {
@@ -712,4 +722,4 @@ def play_game():
 
 
 if __name__ == '__main__':
-    play_game()
+    local_test_game()

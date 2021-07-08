@@ -3,7 +3,7 @@
         {
             "Id": 0,
             "Velocity": "0/0/0",
-            "Position": "0/1/0",
+            "Position": "6/7/5",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -38,7 +38,7 @@
         {
             "Id": 1,
             "Velocity": "0/0/0",
-            "Position": "2/1/1",
+            "Position": "12/5/5",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -73,7 +73,7 @@
         {
             "Id": 2,
             "Velocity": "0/0/0",
-            "Position": "4/1/1",
+            "Position": "9/5/5",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -108,7 +108,7 @@
         {
             "Id": 3,
             "Velocity": "0/0/0",
-            "Position": "6/1/1",
+            "Position": "6/5/5",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -143,7 +143,7 @@
         {
             "Id": 4,
             "Velocity": "0/0/0",
-            "Position": "8/1/1",
+            "Position": "15/5/5",
             "Energy": 50,
             "Health": 100,
             "Equipment": [
@@ -179,32 +179,32 @@
     "Opponent": [
         {
             "Id": 10000,
-            "Velocity": "0/0/0",
-            "Position": "27/27/27",
+            "Velocity": "28/28/28",
+            "Position": "28/28/28",
             "Health": 100
         },
         {
             "Id": 10001,
-            "Velocity": "0/0/0",
-            "Position": "25/27/27",
+            "Velocity": "28/28/28",
+            "Position": "26/28/28",
             "Health": 100
         },
         {
             "Id": 10002,
-            "Velocity": "0/0/0",
-            "Position": "23/27/27",
+            "Velocity": "28/28/28",
+            "Position": "24/28/28",
             "Health": 100
         },
         {
             "Id": 10003,
-            "Velocity": "0/0/0",
-            "Position": "21/27/27",
+            "Velocity": "28/28/28",
+            "Position": "22/28/28",
             "Health": 100
         },
         {
             "Id": 10004,
-            "Velocity": "0/0/0",
-            "Position": "19/27/27",
+            "Velocity": "20/28/28",
+            "Position": "20/28/28",
             "Health": 100
         }
     ],
