@@ -322,7 +322,7 @@ class BattleState(JSONCapability):
         my = list(map(Ship.from_json, data['My']))
         opponent = list(map(Ship.from_json, data['Opponent']))
         ships_id_dict = {ship.Id: ship for ship in my + opponent}
-        fire_infos = list(map(FireInfo.from_json, data['FireInfos']))
+        fire_infos = list()
 
         # Fill default_dangerous_ships values
         for f_ship in my:
@@ -418,7 +418,7 @@ def make_draft(data: dict) -> dict:
     return output
 
 
-def make_turn(data: dict) -> BattleOutput:
+def make_turn(data: dict) -> dict:
     move_selection_weights_dict = {
         'non_stop_weight': -1,
         'background_weight_coefficient': 2,
@@ -480,9 +480,8 @@ def make_turn(data: dict) -> BattleOutput:
 
             # Add weight: enemy focused distance
             enemy_focused_weight = 0
-            gun_radius = cur_my_ship.Equipment[EquipmentType.Gun].Radius
             foc_dangerous_ships = battle_state.get_dangerous_ships(
-                possible_pos, battle_state.Opponent, trigger_dist=gun_radius)
+                possible_pos, battle_state.Opponent, trigger_dist=5)
             if foc_dangerous_ships:  # allies focused target count
                 for e_ship, _ in foc_dangerous_ships:
                     enemy_dangerous_ships = e_ship.Default_dangerous_ships
@@ -617,12 +616,6 @@ def make_turn(data: dict) -> BattleOutput:
     for ship in battle_state.My:
         ship.Move_vector = Vector(*ship_pos_dict[ship.Id])
 
-    for ship in battle_state.My:
-        print(ship.Id, ship.Position.get_cords(), ship_pos_dict[ship.Id])
-        pos_l = list(ship.Next_iteration_ship_points.items())
-        pprint_pos_list = [pos_l[n: n + 3] for n in range(0, len(pos_l), 3)]
-        print(*pprint_pos_list, sep='\n')
-
     # Forming command attack:
     my_ship_collision = {
         f_ship.Id: battle_state.get_all_blocks_pos(ship_pos_dict[f_ship.Id])
@@ -631,7 +624,7 @@ def make_turn(data: dict) -> BattleOutput:
     op_ships_focused = {e_ship.Id: set() for e_ship in battle_state.Opponent}
     my_ships_targets = {f_ship.Id: set() for f_ship in battle_state.My}
     for cur_my_ship in battle_state.My:
-        gun_radius = cur_my_ship.Equipment[EquipmentType.Gun].Radius
+        gun_radius = 5
         for e_ship, _ in battle_state.get_dangerous_ships(
                 cur_my_ship.Position.get_cords(), battle_state.Opponent,
                 trigger_dist=gun_radius):
@@ -674,13 +667,12 @@ def make_turn(data: dict) -> BattleOutput:
         battle_output.UserCommands.append(
             UserCommand(Command="MOVE", Parameters=MoveCommandParameters(
                 cur_my_ship.Id, cur_my_ship.Move_vector)))
-        if EquipmentType.Gun in cur_my_ship.Equipment.keys():
-            if cur_my_ship.Attack_vector.get_cords() not in (
-                    cur_my_ship.Position.get_cords(), cur_my_ship.Move_vector.get_cords()):
-                battle_output.UserCommands.append(
-                    UserCommand(Command="ATTACK", Parameters=AttackCommandParameters(
-                        cur_my_ship.Id, cur_my_ship.Equipment[
-                            EquipmentType.Gun].Name, cur_my_ship.Attack_vector)))
+        if cur_my_ship.Attack_vector.get_cords() not in (
+                cur_my_ship.Position.get_cords(), cur_my_ship.Move_vector.get_cords()):
+            battle_output.UserCommands.append(
+                UserCommand(Command="ATTACK", Parameters=AttackCommandParameters(
+                    cur_my_ship.Id, cur_my_ship.Equipment[
+                        EquipmentType.Gun].Name, cur_my_ship.Attack_vector)))
 
     # Add debugging message in output
     battle_output.Message = f"To battle..."
@@ -690,6 +682,12 @@ def make_turn(data: dict) -> BattleOutput:
             continue
         break
     messages.clear()
+
+    commands = [e.to_json() for e in battle_output.UserCommands]
+    battle_output = {
+        "UserCommands": ,
+        "Message": "my_message"
+    }
 
     return battle_output
 
@@ -721,5 +719,8 @@ def play_game():
             print(json.dumps(make_turn(line), default=lambda x: x.to_json(), ensure_ascii=False))
 
 
-if __name__ == '__main__':
-    local_test_game()
+def play_game_step(line: dict) -> dict:
+    if 'My' in line:
+        res = make_turn(line)
+        print(res)
+        return res

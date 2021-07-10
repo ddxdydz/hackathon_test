@@ -224,13 +224,28 @@ move_selection_weights_dict = {
     }
 }
 
-test_cord = (15, 15, 16)
-max_axis = max(test_cord)
-if max_axis > 15:
-    max_axis = 30 - max_axis
-to_center_weight_coefficient = move_selection_weights_dict['to_center_weight_coefficient']
-to_center_weight_ = to_center_weight_coefficient if max_axis == 0 else \
-    to_center_weight_coefficient / max_axis
 
-for i in range(0, 16):
-    print(move_selection_weights_dict['to_center_weight_coefficient'] / i)
+def get_interacting_blocks(ship_1_cords, ship_2_cords) -> tuple:
+    ship_1_collision_pos = get_all_blocks_pos(ship_1_cords)
+    ship_2_collision_pos = get_all_blocks_pos(ship_2_cords)
+    closest_ship_1_point = min(
+        [(point, chebyshev_distance(point, ship_2_cords))
+         for point in ship_1_collision_pos], key=lambda p: p[1])[0]
+    closest_ship_2_point = min(
+        [(point, chebyshev_distance(point, closest_ship_1_point))
+         for point in ship_2_collision_pos], key=lambda p: p[1])[0]
+    return closest_ship_1_point, closest_ship_2_point
+
+
+def get_coordinate_line(ship_1_cords, ship_2_cords, inc_dr_axis=0, max_iter=32) -> list:
+    closest_ship_1_point, closest_ship_2_point = \
+        get_interacting_blocks(ship_1_cords, ship_2_cords)
+    cords_list = bresenham_3d(
+        closest_ship_1_point, closest_ship_2_point,
+        inc_dr_axis, max_iter)
+    return cords_list
+
+
+blaster_ray_cords = tuple(get_coordinate_line(
+        *get_interacting_blocks((0, 0, 0), (4, 3, 5)), inc_dr_axis=6)[1:6])
+print(blaster_ray_cords)

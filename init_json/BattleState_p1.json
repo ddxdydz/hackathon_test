@@ -1,0 +1,67 @@
+{
+    "My": [
+        {
+            "Id": 0,
+            "Velocity": "0/0/0",
+            "Position": "0/0/0",
+            "Health": 100
+        },
+        {
+            "Id": 1,
+            "Velocity": "0/0/0",
+            "Position": "2/0/0",
+            "Health": 100
+        },
+        {
+            "Id": 2,
+            "Velocity": "0/0/0",
+            "Position": "4/0/0",
+            "Health": 100
+        },
+        {
+            "Id": 3,
+            "Velocity": "0/0/0",
+            "Position": "6/0/0",
+            "Health": 100
+        },
+        {
+            "Id": 4,
+            "Velocity": "0/0/0",
+            "Position": "8/0/0",
+            "Health": 100
+        }
+    ],
+    "Opponent": [
+        {
+            "Id": 10000,
+            "Velocity": "0/0/0",
+            "Position": "28/28/28",
+            "Health": 100
+        },
+        {
+            "Id": 10001,
+            "Velocity": "0/0/0",
+            "Position": "26/28/28",
+            "Health": 100
+        },
+        {
+            "Id": 10002,
+            "Velocity": "0/0/0",
+            "Position": "24/28/28",
+            "Health": 100
+        },
+        {
+            "Id": 10003,
+            "Velocity": "0/0/0",
+            "Position": "22/28/28",
+            "Health": 100
+        },
+        {
+            "Id": 10004,
+            "Velocity": "0/0/0",
+            "Position": "20/28/28",
+            "Health": 100
+        }
+    ],
+    "FireInfos": [{}]
+}
