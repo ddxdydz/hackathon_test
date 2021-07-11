@@ -1,7 +1,8 @@
 import json
 from ursina import *
 
-BATTLE_PATH = 'battle_20210710211759726910_dw.json'
+BATTLE_PATH = ''
+
 CUR_STEP = 0
 DIF = -15
 CAMERA_STEP = 1
@@ -42,13 +43,14 @@ def d_z(z_pos):
 
 
 class Game(Ursina):
-    CUR_STEP = 1
+    CUR_STEP = 0
 
     def __init__(self):
         super().__init__()
         window.title = 'my_battle_arena'
         window.color = GAME_WINDOW_COLOR
         window.borderless = False
+        window.fps_counter.enabled = True
 
         camera.orthographic = True
         camera.fov = 2
@@ -64,15 +66,17 @@ class Game(Ursina):
             BLOCK_END_BLASTER_RAY_ID: Game.block_end_blaster,
             BLOCK_TAKE_DAMAGE_ID: Game.block_damage
         }
+
         with open(f'battles/{BATTLE_PATH}', 'r', encoding='utf8') as file:
             f = file.read()
             self.data = json.loads(f)
+        self.max_count = len(list(self.data.keys()))
         self.load_game()
 
     def load_game(self):
-        scene.clear()
-        Game.init_game_net()
         if self.test:
+            scene.clear()
+            Game.init_game_net()
             Game.block_player_1(13, 13, 13)
             Game.block_player_1(13, 14, 13)
             Game.block_player_1(13, 13, 14)
@@ -104,17 +108,18 @@ class Game(Ursina):
             Game.block_end_blaster(14, 18, 19)
             return
 
+        scene.clear()
+        self.init_game_net()
         for block_id, cords in self.data[str(self.CUR_STEP)]["object_positions"]:
             x, y, z = cords
             self.block_type_dict[block_id](x, y, z)
-            print(self.data[str(self.CUR_STEP)]["message"])
 
     @staticmethod
     def init_game_net():
         for y in range(31):  # , rotation=(0, 0, 90)
             Entity(model='line', scale=30, x=d_x(15 - 0.5), y=d_y(y - 0.5), z=d_z(0 - 0.5), color=GAME_NET_COLOR)
-            Entity(model='line', scale=30, x=d_x(0 - 0.5), y=d_y(y - 0.5), z=d_z(15 - 0.5), color=GAME_NET_COLOR,
-                   rotation=(0, 90, 0))
+            Entity(model='line', scale=30, x=d_x(0 - 0.5), y=d_y(y - 0.5), z=d_z(15 - 0.5),
+                   color=GAME_NET_COLOR, rotation=(0, 90, 0))
         for z in range(31):
             Entity(model='line', scale=30, x=d_x(15 - 0.5), y=d_y(0 - 0.5), z=d_z(z - 0.5), color=GAME_NET_COLOR)
             Entity(model='line', scale=30, x=d_x(0 - 0.5), y=d_y(15 - 0.5), z=d_z(z - 0.5), color=GAME_NET_COLOR,
@@ -196,7 +201,10 @@ class Game(Ursina):
 
     @staticmethod
     def block_damage(x, y, z):
-        Entity(model='cube', x=d_x(x), y=d_y(y), z=d_z(z), color=BLOCK_TAKE_DAMAGE_COLOR)
+        Entity(
+            model='cube', x=d_x(x), y=d_y(y), z=d_z(z),
+            color=BLOCK_TAKE_DAMAGE_COLOR
+        )
 
     def input(self, key):
         if key in ('w', 's', 'a', 'd', 'q', 'e'):
@@ -220,22 +228,31 @@ class Game(Ursina):
                 camera.world_position = \
                     (camera_x, camera_y - CAMERA_STEP, camera_z)
             print(f'Camera_position - {camera.world_position}')
-        if key in ('arrow_left', 'arrow_right'):
-            if key == 'arrow_left':
-                if self.CUR_STEP != 1:
-                    self.CUR_STEP -= 1
-                self.load_game()
-            elif key == 'arrow_right':
-                if self.CUR_STEP != len(list(self.data.keys())):
-                    self.CUR_STEP += 1
-                self.load_game()
+        if key == 'arrow_left':
+            self.CUR_STEP -= 1
+            if self.CUR_STEP < 0:
+                self.CUR_STEP = self.max_count - 1
+            self.load_game()
+        elif key == 'arrow_right':
+            self.CUR_STEP = (self.CUR_STEP + 1) % self.max_count
+            self.load_game()
+        elif key in tuple(map(str, range(10))):
+            inc_count = int(key) if int(key) else 10
+            self.CUR_STEP = (self.CUR_STEP + inc_count) % self.max_count
+            self.load_game()
         elif key == 't':
             self.test = not self.test
             self.load_game()
+        elif key == 'o' or key == 'n':
+            print(self.CUR_STEP)
+        elif key == 'p':
+            print(self.data[str(self.CUR_STEP)]["message"])
 
         super().input(key)
 
 
 if __name__ == '__main__':
+    if not BATTLE_PATH:
+        BATTLE_PATH = os.listdir(r'battles')[-1]
     game = Game()
     game.run()

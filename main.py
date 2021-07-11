@@ -106,12 +106,12 @@ def add_message(message: str):
     messages.append(message)
 
 
-def tuple_format_cords(cords: str) -> tuple:
-    return tuple(map(int, cords.split('/')))
+def tuple_format_cords(cds: str) -> tuple:
+    return tuple(map(int, cds.split('/')))
 
 
-def str_format_cords(cords: tuple) -> str:
-    return f"{cords[0]}/{cords[1]}/{cords[2]}"
+def str_format_cords(cds: tuple) -> str:
+    return f"{cds[0]}/{cds[1]}/{cds[2]}"
 
 
 def get_all_blocks_pos(s_cords: tuple, level: int = 0) -> tuple:
@@ -154,8 +154,8 @@ def get_blaster_ray(cur_pos: tuple, target: tuple):
     return blaster_ray_cords
 
 
-def check_borders(cords: tuple) -> bool:
-    return all(map(lambda cord: 0 <= cord <= 28, cords))
+def check_borders(cds: tuple) -> bool:
+    return all(map(lambda cord: 0 <= cord <= 28, cds))
 
 
 with open(r'init_json\BattleState_p1.json', 'r', encoding='utf8') as file:
@@ -168,6 +168,17 @@ with open(r'init_json\BattleState_p2.json', 'r', encoding='utf8') as file:
         json.loads(data)
 
 step_num = 0
+battle[step_num] = {
+    'step': step_num,
+    'object_positions': [
+        (BLOCK_PLAYER_1_ID if len(str(ship['Id'])) < 2 else BLOCK_PLAYER_2_ID, pos)
+        for ship in battle_state_p1["My"] + battle_state_p2["My"]
+        for pos in get_all_blocks_pos(tuple_format_cords(ship["Position"]))
+    ],
+    'message': 'start battle',
+    'player_1_info': battle_state_p1["My"],
+    'player_2_info': battle_state_p1["Opponent"]
+}
 while True:
     step_num += 1
 
@@ -180,7 +191,7 @@ while True:
     object_positions = []
     output_message = ''
 
-    output_message += f'\nStep: {step_num}'
+    output_message += f'\nStep: {step_num} - {step_num + 1}'
 
     battle_output_p1 = player_1_step(battle_state_p1)
     battle_output_p2 = player_2_step(battle_state_p2)
@@ -231,6 +242,7 @@ while True:
                     ships[ship_command_id]["Next_position"] = \
                         move_command["Parameters"]["Target"]
                     were_changes = True
+    ram_attacked_ships = []
     for move_command in move_commands:
         ship_command_id = move_command['Parameters']['Id']
         if ships[ship_command_id]["Next_position"] != move_command['Parameters']['Target']:
@@ -244,20 +256,22 @@ while True:
                         ships[ship_command_id]["Health"] -= 2
                         ships[s_id]["Health"] -= 2
                         # Check vector
-                        next_x, next_y, next_z = ships[s_id]['Next_position']
-                        ram_xv, ram_yv, ram_zv = (
-                            ships[ship_command_id]["Next_position"][n] - move_command['Parameters']['Target'][n]
-                            for n in range(3)
-                        )
-                        cords = next_x + ram_xv, next_y + ram_yv, next_z + ram_zv
-                        ship_cols = []
-                        for i in ships.keys():
-                            if i != s_id:
-                                ship_cols += list(get_all_blocks_pos(ships[i]["Next_position"]))
-                        sum_a_cords = get_all_blocks_pos(cords) + tuple(set(ship_cols))
-                        if len(set(sum_a_cords)) != len(sum_a_cords):
-                            output_message += f'\nRAM IMPULS: {ship_command_id} -> {s_id} from {ships[s_id]["Next_position"]} to {cords} - VEL {ram_xv, ram_yv, ram_zv} - N {ships[ship_command_id]["Next_position"]} - T {move_command["Parameters"]["Target"]}'
-                            ships[s_id]["Next_position"] = cords
+                        if s_id in ram_attacked_ships:
+                            next_x, next_y, next_z = ships[s_id]['Next_position']
+                            ram_xv, ram_yv, ram_zv = (
+                                ships[ship_command_id]["Next_position"][n] - move_command['Parameters']['Target'][n]
+                                for n in range(3)
+                            )
+                            cords = next_x + ram_xv, next_y + ram_yv, next_z + ram_zv
+                            ship_cols = []
+                            for i in ships.keys():
+                                if i != s_id:
+                                    ship_cols += list(get_all_blocks_pos(ships[i]["Next_position"]))
+                            sum_a_cords = get_all_blocks_pos(cords) + tuple(set(ship_cols))
+                            if len(set(sum_a_cords)) != len(sum_a_cords):
+                                output_message += f'\nRAM IMPULS: {ship_command_id} -> {s_id} from {ships[s_id]["Next_position"]} to {cords} - VEL {ram_xv, ram_yv, ram_zv} - N {ships[ship_command_id]["Next_position"]} - T {move_command["Parameters"]["Target"]}'
+                                ships[s_id]["Next_position"] = cords
+                                ram_attacked_ships.append(s_id)
 
     # Check borders
     for s_id in ships.keys():
@@ -375,22 +389,33 @@ while True:
         'player_2_info': battle_state_p1["Opponent"]
     }
 
-    print(output_message)
-
-    res = 'dw'
+    res = ''
     if not count_p1_ships and count_p2_ships:
         res = 'p2'
-        output_message += '\n' + P2_WON
-        break
     elif count_p1_ships and not count_p2_ships:
         res = 'p1'
-        output_message += '\n' + P1_WON
-        break
-    if step_num > STEP_LIMIT or not (count_p1_ships or count_p2_ships):
-        output_message += '\n' + DRAW
-        break
+    elif step_num > STEP_LIMIT or not (count_p1_ships or count_p2_ships):
+        res = 'dw'
 
-now = ''.join([elem for elem in str(datetime.now()) if elem.isdigit()])
-filename = f'battles/battle_{now}_{res}.json'
-with open(filename, 'w', encoding='utf8') as file:
-    json.dump(battle, file, ensure_ascii=True, sort_keys=True)
+    if res:
+        step_num += 1
+        battle[step_num] = {
+            'step': step_num,
+            'object_positions': [
+                (BLOCK_PLAYER_1_ID if len(str(ship['Id'])) < 2 else BLOCK_PLAYER_2_ID, pos)
+                for ship in battle_state_p1["My"] + battle_state_p1["Opponent"]
+                for pos in get_all_blocks_pos(tuple_format_cords(ship["Position"]))
+            ],
+            'message': 'end battle',
+            'player_1_info': battle_state_p1["My"],
+            'player_2_info': battle_state_p1["Opponent"]
+        }
+        output_message += '\n' + P2_WON if res == 'p2' else P1_WON if res == 'p1' else DRAW
+        now = ''.join([elem for elem in str(datetime.now()) if elem.isdigit()])
+        filename = f'battles/battle_{now}_{res}.json'
+        with open(filename, 'w', encoding='utf8') as file:
+            json.dump(battle, file, ensure_ascii=True, sort_keys=True)
+        print(output_message)
+        print(f'Written to {filename}')
+        break
+    print(output_message)

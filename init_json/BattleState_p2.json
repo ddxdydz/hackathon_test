@@ -9,25 +9,25 @@
         {
             "Id": 10001,
             "Velocity": "0/0/0",
-            "Position": "26/28/28",
+            "Position": "28/28/26",
             "Health": 100
         },
         {
             "Id": 10002,
             "Velocity": "0/0/0",
-            "Position": "24/28/28",
+            "Position": "28/28/24",
             "Health": 100
         },
         {
             "Id": 10003,
             "Velocity": "0/0/0",
-            "Position": "22/28/28",
+            "Position": "28/28/22",
             "Health": 100
         },
         {
             "Id": 10004,
             "Velocity": "0/0/0",
-            "Position": "20/28/28",
+            "Position": "28/28/20",
             "Health": 100
         }
     ],
@@ -41,25 +41,25 @@
         {
             "Id": 1,
             "Velocity": "0/0/0",
-            "Position": "2/0/0",
+            "Position": "0/0/2",
             "Health": 100
         },
         {
             "Id": 2,
             "Velocity": "0/0/0",
-            "Position": "4/0/0",
+            "Position": "0/0/4",
             "Health": 100
         },
         {
             "Id": 3,
             "Velocity": "0/0/0",
-            "Position": "6/0/0",
+            "Position": "0/0/6",
             "Health": 100
         },
         {
             "Id": 4,
             "Velocity": "0/0/0",
-            "Position": "8/0/0",
+            "Position": "0/0/8",
             "Health": 100
         }
     ],

@@ -2,17 +2,26 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="245a79e2-0572-4e63-b121-3fd00caed19f" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/graph_test.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/init_json/BattleState_p1.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/init_json/BattleState_p2.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/player_1.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/player_2.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/player_main.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/ur_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/BattleState_for_test.json" beforeDir="false" afterPath="$PROJECT_DIR$/script_main/BattleState_for_test.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/play_OOP_way.py" beforeDir="false" afterPath="$PROJECT_DIR$/script_main/play_OOP_way.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test.py" beforeDir="false" afterPath="$PROJECT_DIR$/test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710210558008564_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710211004556503_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710211010508411_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710211140780589_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710211155683270_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710211406433193_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710211455726883_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710211536725518_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710211759726910_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710212229367321_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710212405422469_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710212736104372_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710212800788705_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/battles/battle_20210710213241768715_dw.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/graph_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/graph_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/init_json/BattleState_p1.json" beforeDir="false" afterPath="$PROJECT_DIR$/init_json/BattleState_p1.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/init_json/BattleState_p2.json" beforeDir="false" afterPath="$PROJECT_DIR$/init_json/BattleState_p2.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -52,28 +61,7 @@
       <recent name="C:\Users\User\Documents\GitHub\hackathon_making_superintelligence\script_tests" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.main">
-    <configuration name="graph_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="hackathon_making_superintelligence" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/graph_test.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
+  <component name="RunManager" selected="Python.show_battle_3d (1)">
     <configuration name="main" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="hackathon_making_superintelligence" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -87,27 +75,6 @@
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/main.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="play_OOP_way" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
-      <module name="hackathon_making_superintelligence" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="C:\Users\User\Documents\GitHub\hackathon_making_superintelligence\script_main\play_OOP_way.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -137,7 +104,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+    <configuration name="show_battle_3d (1)" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="hackathon_making_superintelligence" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -149,7 +116,49 @@
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/test.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/show_battle_3d.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="show_battle_3d" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="hackathon_making_superintelligence" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="C:\Users\User\Documents\GitHub\hackathon_making_superintelligence\show_battle_3d.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="ur_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="hackathon_making_superintelligence" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <option name="SCRIPT_NAME" value="C:\Users\User\Documents\GitHub\hackathon_making_superintelligence\script_tests\ur_test.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -160,11 +169,11 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.show_battle_3d (1)" />
+        <item itemvalue="Python.show_battle_3d" />
         <item itemvalue="Python.main" />
-        <item itemvalue="Python.graph_test" />
+        <item itemvalue="Python.ur_test" />
         <item itemvalue="Python.player_1" />
-        <item itemvalue="Python.test" />
-        <item itemvalue="Python.play_OOP_way" />
       </list>
     </recent_temporary>
   </component>
@@ -186,22 +195,22 @@
       <screen x="0" y="0" width="1366" height="722" />
     </state>
     <state x="419" y="163" key="#com.intellij.fileTypes.FileTypeChooser/0.0.1366.722@0.0.1366.722" timestamp="1624241718083" />
-    <state width="1345" height="226" key="GridCell.Tab.0.bottom" timestamp="1625927693294">
+    <state width="1345" height="183" key="GridCell.Tab.0.bottom" timestamp="1625989189485">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="226" key="GridCell.Tab.0.bottom/0.0.1366.722@0.0.1366.722" timestamp="1625927693294" />
-    <state width="1345" height="226" key="GridCell.Tab.0.center" timestamp="1625927693294">
+    <state width="1345" height="183" key="GridCell.Tab.0.bottom/0.0.1366.722@0.0.1366.722" timestamp="1625989189485" />
+    <state width="1345" height="183" key="GridCell.Tab.0.center" timestamp="1625989189485">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="226" key="GridCell.Tab.0.center/0.0.1366.722@0.0.1366.722" timestamp="1625927693294" />
-    <state width="1345" height="226" key="GridCell.Tab.0.left" timestamp="1625927693294">
+    <state width="1345" height="183" key="GridCell.Tab.0.center/0.0.1366.722@0.0.1366.722" timestamp="1625989189485" />
+    <state width="1345" height="183" key="GridCell.Tab.0.left" timestamp="1625989189485">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="226" key="GridCell.Tab.0.left/0.0.1366.722@0.0.1366.722" timestamp="1625927693294" />
-    <state width="1345" height="226" key="GridCell.Tab.0.right" timestamp="1625927693294">
+    <state width="1345" height="183" key="GridCell.Tab.0.left/0.0.1366.722@0.0.1366.722" timestamp="1625989189485" />
+    <state width="1345" height="183" key="GridCell.Tab.0.right" timestamp="1625989189485">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
-    <state width="1345" height="226" key="GridCell.Tab.0.right/0.0.1366.722@0.0.1366.722" timestamp="1625927693294" />
+    <state width="1345" height="183" key="GridCell.Tab.0.right/0.0.1366.722@0.0.1366.722" timestamp="1625989189485" />
     <state width="1345" height="220" key="GridCell.Tab.1.bottom" timestamp="1625927693175">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
@@ -222,6 +231,10 @@
       <screen x="0" y="0" width="1366" height="722" />
     </state>
     <state x="184" y="6" key="SettingsEditor/0.0.1366.722@0.0.1366.722" timestamp="1624175981915" />
+    <state width="498" height="446" key="SwitcherDM" timestamp="1625986328324">
+      <screen x="0" y="0" width="1366" height="722" />
+    </state>
+    <state width="498" height="446" key="SwitcherDM/0.0.1366.722@0.0.1366.722" timestamp="1625986328324" />
     <state x="346" y="43" width="672" height="678" key="search.everywhere.popup" timestamp="1625887997323">
       <screen x="0" y="0" width="1366" height="722" />
     </state>
